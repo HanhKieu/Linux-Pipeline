@@ -45,6 +45,7 @@ int main(int argc, char *argv[]){
     vector<string>::iterator it; //iterator used for insertion
     vector<string>::iterator it2; //vector iterator
     int numPrevCommands = 0;
+   	string deleteString("\b \b");
 
 //    string
 
@@ -53,9 +54,21 @@ int main(int argc, char *argv[]){
     
     while(1){
         read(STDIN_FILENO, &RXChar, 1);
-        currentLine[currentLineIndex++] = RXChar;
+
+        if(isprint(RXChar) || RXChar == 0x0A){
+        	write(STDOUT_FILENO, &RXChar, 1);
+			currentLine[currentLineIndex++] = RXChar;
+		}
+
+
         if(0x04 == RXChar){ // C-d
             break;
+        }
+        else if(0x7F == RXChar){ //backspace
+        	write(STDOUT_FILENO, deleteString.c_str(), 3);
+        	if(currentLineIndex >= 1)
+        		currentLineIndex--;
+        	currentLine[currentLineIndex] = 0;
         }
         else{
     	    if(0x1b == RXChar){ // ' '`
@@ -91,15 +104,14 @@ int main(int argc, char *argv[]){
                         printf("False alarm\n");
 
 		         }
-	        }  
-
+	        }
             if(0x0a == RXChar){ //pressed enter 
-                printf("Pressed enter\n");
-                printf("Length of that command %d\n", currentLineIndex-1);
+                //printf("Pressed enter\n");
+                //printf("Length of that command %d\n", currentLineIndex-1);
                 currentLine[currentLineIndex-1] = 0;
 
                 string str(currentLine);
-                printf("%s\n", str.c_str());
+                //printf("%s\n", str.c_str());
                 currentLineIndex = 0;
                 it = myVector.begin();
                 myVector.insert(it, str);
