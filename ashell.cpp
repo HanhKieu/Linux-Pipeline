@@ -46,7 +46,11 @@ int main(int argc, char *argv[]){
     vector<string>::iterator it2; //vector iterator
     int numPrevCommands = 0;
    	string deleteString("\b \b");
-
+   	string soundString("\a");
+   	int historyCounter = 0;
+   	bool upArrowOnce = false;
+   	bool downArrowOnce = false;
+   	
 //    string
 
     SetNonCanonicalMode(STDIN_FILENO, &SavedTermAttributes);
@@ -73,28 +77,56 @@ int main(int argc, char *argv[]){
         else{
     	    if(0x1b == RXChar){ // ' '`
                 read(STDIN_FILENO, &RXChar, 1);
-                currentLine[currentLineIndex++] = RXChar;
-
 
         	    if(RXChar == 0x5b){ // '['
         		    read(STDIN_FILENO, &RXChar, 1);
-                    currentLine[currentLineIndex++] = RXChar;
 
+        	        if(RXChar == 0x41){ // 'A' up arrow
+        	        	
+        	        	downArrowOnce = false;
 
-        	        if(RXChar == 0x41 && !myVector.empty()){ // 'A'
-        		     	//printf("It was an up arrow\n");
-
-        		     	cout << *it2 << endl;
-        		     	if(it2 != myVector.end() - 1)
-        		     		++it2;
+        	        	if(myVector.empty()){
+        	        		write(STDOUT_FILENO, soundString.c_str(),1);
+        	        	}
+        	        	else{
+		    		     	
+		    		     	if( (it2 != myVector.end() - 1) ){
+		    		     		write(STDOUT_FILENO, it2->c_str(), it2->size());
+		    		     		++it2;
+		    		     	} //if you're not at the end icrement
+		    		     	else if(upArrowOnce == true){
+		    		     		write(STDOUT_FILENO, soundString.c_str(),1);
+		    		     	}
+		    		     	else{
+		    		     		write(STDOUT_FILENO, it2->c_str(), it2->size());
+		    		     		upArrowOnce = true;
+		    		     	}//if this is the end
+	    		     	}
                     }
 
-        		    else if(RXChar == 0x42){ // 'B'
-        		    	if(it2 != myVector.begin())
-        		    		it2--;
+        		    else if(RXChar == 0x42){ // 'B' down arrow
 
-        		    	cout << *it2 << endl;
+        		    	upArrowOnce = false;
+        		    	if(myVector.empty()){
+        		    		write(STDOUT_FILENO, soundString.c_str(),1);
+        		    	}
+        		    	else{
+        		    		
+	        		    	if(it2 != myVector.begin()){
+	        		    		it2--;
+	        		    		write(STDOUT_FILENO, it2->c_str(), it2->size());
+	        		    	} //if your iterator is at the beginning of vector and you press down make it ding
+	        		    	else if(downArrowOnce == true){
+	        		    		write(STDOUT_FILENO, soundString.c_str(),1);
+	        		    	}
+	        		    	else{
+	        		    		write(STDOUT_FILENO, soundString.c_str(),1);
+	        		    		downArrowOnce = true;
+	        		    		
+	        		    	}//else write onto screen
+
         		        //printf("It was a down arrow\n");
+        		    	}
                     }
 
                     else if(RXChar == 0x43 || RXChar == 0x44) // 'C' or 'D'
@@ -103,11 +135,19 @@ int main(int argc, char *argv[]){
                     else //anything else
                         printf("False alarm\n");
 
-		         }
+		        }
 	        }
             if(0x0a == RXChar){ //pressed enter 
                 //printf("Pressed enter\n");
                 //printf("Length of that command %d\n", currentLineIndex-1);
+
+               	historyCounter++;
+
+	        	if(historyCounter > 10){
+	        		myVector.pop_back();
+	        		historyCounter--;
+	        	}//only up to 10 in our vector
+
                 currentLine[currentLineIndex-1] = 0;
 
                 string str(currentLine);
