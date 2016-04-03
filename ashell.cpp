@@ -35,6 +35,16 @@ void SetNonCanonicalMode(int fd, struct termios *savedattributes){
 }
 
 
+void clearSTDOUT(int sizeOfString ){
+	string deleteString("\b \b");
+	
+	for(int i = 0; i < sizeOfString ; i++){
+		write(STDOUT_FILENO, deleteString.c_str(), 3);
+	}
+
+
+
+}
 
 int main(int argc, char *argv[]){
     struct termios SavedTermAttributes;
@@ -89,8 +99,9 @@ int main(int argc, char *argv[]){
         	        		write(STDOUT_FILENO, soundString.c_str(),1);
         	        	}
         	        	else{
-		    		     	
+
 		    		     	if( (it2 != myVector.end() - 1) ){
+		    		     		clearSTDOUT(it2->size());
 		    		     		write(STDOUT_FILENO, it2->c_str(), it2->size());
 		    		     		++it2;
 		    		     	} //if you're not at the end icrement
@@ -98,6 +109,7 @@ int main(int argc, char *argv[]){
 		    		     		write(STDOUT_FILENO, soundString.c_str(),1);
 		    		     	}
 		    		     	else{
+		    		     		clearSTDOUT(it2->size());
 		    		     		write(STDOUT_FILENO, it2->c_str(), it2->size());
 		    		     		upArrowOnce = true;
 		    		     	}//if this is the end
@@ -111,7 +123,7 @@ int main(int argc, char *argv[]){
         		    		write(STDOUT_FILENO, soundString.c_str(),1);
         		    	}
         		    	else{
-        		    		
+        		    		clearSTDOUT(it2->size());
 	        		    	if(it2 != myVector.begin()){
 	        		    		it2--;
 	        		    		write(STDOUT_FILENO, it2->c_str(), it2->size());
