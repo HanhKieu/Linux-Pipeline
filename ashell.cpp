@@ -4,6 +4,7 @@
 #include <termios.h>
 #include <ctype.h>
 #include <string>
+#include <cstring>
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -15,7 +16,7 @@ void ResetCanonicalMode(int fd, struct termios *savedattributes){
 
 void SetNonCanonicalMode(int fd, struct termios *savedattributes){
     struct termios TermAttributes;
-    char *name;
+    //char *name;
     
     // Make sure stdin is a terminal. 
     if(!isatty(fd)){
@@ -35,16 +36,23 @@ void SetNonCanonicalMode(int fd, struct termios *savedattributes){
 }
 
 
-void clearSTDOUT(int sizeOfString ){
+void clearSTDOUT(int &sizeOfString, char *currentLine ){
 	string deleteString("\b \b");
 	
 	for(int i = 0; i < sizeOfString ; i++){
 		write(STDOUT_FILENO, deleteString.c_str(), 3);
+        currentLine[i] = 0;
 	}
-
-
-
+    sizeOfString = 0;
 }
+//FUNCTION THAT CHANGES CURRENTLINE AND UPDATES ITS CURRENTLINESIZE
+
+// template <class myVectorIterator>
+// void updateCurrentLine(const char *currentLine, myVectorIterator it2){
+//     currentLine = it2->c_str();
+//     //it2->c_str()
+//    // cout << "   St ring is :" << str << endl;
+// }
 
 int main(int argc, char *argv[]){
     struct termios SavedTermAttributes;
@@ -52,7 +60,6 @@ int main(int argc, char *argv[]){
     char currentLine[10000];
     int currentLineSize = 0;
     vector<string> myVector;
-    vector<string>::iterator it; //iterator used for insertion
     vector<string>::iterator it2; //vector iterator
     int numPrevCommands = 0;
    	string deleteString("\b \b");
@@ -99,8 +106,7 @@ int main(int argc, char *argv[]){
         		    read(STDIN_FILENO, &RXChar, 1);
 
                     //IF UP ARROW , 'A'
-        	        if(RXChar == 0x41){
-        	        	
+        	        if(RXChar == 0x41){       	        	
         	        	downArrowOnce = false;
 
                         //IF VECTOR IS EMPTY, THEN BEEP
@@ -111,9 +117,19 @@ int main(int argc, char *argv[]){
 
                             //IF YOU'RE NOT AT THE END OF THE VECTOR
 		    		     	if( (it2 != myVector.end() - 1) ){
-		    		     		clearSTDOUT(currentLineSize);
+                                //cout << "BEFORE CURRENT LINE IS: " << currentLine << endl;
+                                //cout << " our it2S tring is :" << it2->c_str() << endl;
+		    		     		clearSTDOUT(currentLineSize, currentLine);
+                                //cout << "current line size is: " << currentLineSize << endl;
+                               // cout << "CURRENT LINE IS: " << currentLine << endl;
+
 		    		     		write(STDOUT_FILENO, it2->c_str(), it2->size());
+
+
                                 currentLineSize = it2->size();
+                                strcpy(currentLine, it2->c_str());
+
+
 		    		     		++it2;
 		    		     	}//THEN GO TO THE NEXT
                             //ELSE IF YOU'VE DISPLAYED THE END ALREADY, THEN BEEP
@@ -122,9 +138,13 @@ int main(int argc, char *argv[]){
 		    		     	}
                             //ELSE IF YOU'RE AT THE END, THEN DISPLAY IT
 		    		     	else{
-		    		     		clearSTDOUT(currentLineSize);
+		    		     		clearSTDOUT(currentLineSize, currentLine);
 		    		     		write(STDOUT_FILENO, it2->c_str(), it2->size());
+
+
                                 currentLineSize = it2->size();
+                                strcpy(currentLine, it2->c_str());
+                                //cout << "current line IS" << currentLine << endl;
 		    		     		upArrowOnce = true;
 		    		     	}//if this is the end
 	    		     	}
@@ -137,17 +157,20 @@ int main(int argc, char *argv[]){
         		    		write(STDOUT_FILENO, soundString.c_str(),1);
         		    	}
         		    	else{
-        		    		clearSTDOUT(currentLineSize);
+        		    		clearSTDOUT(currentLineSize, currentLine);
+                            //IF ITERATOR NOT AT BEGINNING OF VECTOR
 	        		    	if(it2 != myVector.begin()){
 	        		    		it2--;
 	        		    		write(STDOUT_FILENO, it2->c_str(), it2->size());
+
                                 currentLineSize = it2->size();
-	        		    	} //if your iterator is at the beginning of vector and you press down make it ding
+                                strcpy(currentLine, it2->c_str());
+
+	        		    	}
 	        		    	else if(downArrowOnce == true){
 	        		    		write(STDOUT_FILENO, soundString.c_str(),1);
 	        		    	}
 	        		    	else{
-	        		    		write(STDOUT_FILENO, soundString.c_str(),1);
 	        		    		downArrowOnce = true;
 	        		    		
 	        		    	}//else write onto screen
@@ -155,9 +178,6 @@ int main(int argc, char *argv[]){
         		        //printf("It was a down arrow\n");
         		    	}
                     }
-                    //IF C OR D MEANS LEFT OR RIGHT ARROW
-                    else if(RXChar == 0x43 || RXChar == 0x44) // 'C' or 'D'
-                        printf("It was a left or right arrow\n");
                     //OTHERWISE ITS SOMETHING ELSE
                     else
                         printf("False alarm\n");
@@ -165,10 +185,12 @@ int main(int argc, char *argv[]){
 		        }
 	        }
 
-            //IF WE PRESSED ENTER
-            if(0x0a == RXChar){
-
+            //IF WE PRESSED ENTER AND THERE IS SOMETHING IN CURRENT LINE
+            if(0x0a == RXChar && currentLineSize != 1){
+                //cout << "went into here" << endl;
                	historyCounter++;
+
+
                 //cout << "current line size is " << currentLineSize << endl;
                 //IF WE HAVE MORE THAN 10 IN OUR HISTORY
 	        	if(historyCounter > 10){
@@ -179,17 +201,20 @@ int main(int argc, char *argv[]){
                 //REMOVES NEWLINE AT THE END
                 currentLine[currentLineSize-1] = 0;
                 currentLineSize = 0;
-            
-                //SET ITERATOR AT THE BEGINNING OF VECTOR
-                it = myVector.begin();
 
                 //INSERTS CURRENTLINE INTO VECTOR
                 string str(currentLine);
-                myVector.insert(it, str);
+                myVector.insert(myVector.begin(), str);
 
                 it2 = myVector.begin();
                 numPrevCommands++;
 
+
+            }
+            //ELSE IF WE PRESS ENTER WITH EMPTY LINE
+            else if(0x0a == RXChar ){
+                currentLine[currentLineSize-1] = 0;
+                currentLineSize = 0;
             }
         }
     }
