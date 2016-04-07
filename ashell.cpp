@@ -194,7 +194,6 @@ int main(int argc, char *argv[]){
                     //IF UP ARROW , 'A'
                     if(RXChar == 0x41){                     
                         downArrowOnce = false;
-
                         //IF VECTOR IS EMPTY, THEN BEEP
                         if(myVector.empty()){
                             write(STDOUT_FILENO, soundString.c_str(),1);
@@ -204,17 +203,20 @@ int main(int argc, char *argv[]){
                             //IF YOU'RE NOT AT THE END OF THE VECTOR
                             //cout << "up: " << upArrowOnce << endl;
                             if(it2 == myVector.begin() && firstTimeVisitingBegin){
-	                            firstTimeVisitingBegin = false;
-	                            clearSTDOUT(currentLineSize, currentLine);
-	                            write(STDOUT_FILENO, it2->c_str(), it2->size());
-	                            currentLineSize = it2->size();
-	                            strcpy(currentLine, it2->c_str());	
+                                firstTimeVisitingBegin = false;
+                                clearSTDOUT(currentLineSize, currentLine);
+                                write(STDOUT_FILENO, it2->c_str(), it2->size());
+                                currentLineSize = it2->size();
+                                strcpy(currentLine, it2->c_str());  
                             }
                             else if( (it2 != myVector.end() - 1) ){
 
-                            	++it2;
-                                //cout << "BEFORE CURRENT LINE IS: " << currentLine << endl;
+                                ++it2;
                                 //cout << " our it2S tring is :" << it2->c_str() << endl;
+                                if(it2 == myVector.end() - 1){
+                                    //cout << "yeet" << endl;
+                                    upArrowOnce = true;
+                                }
                                 clearSTDOUT(currentLineSize, currentLine);
                                 //cout << "current line size is: " << currentLineSize << endl;
                                // cout << "CURRENT LINE IS: " << currentLine << endl;
@@ -226,27 +228,12 @@ int main(int argc, char *argv[]){
                                 currentLineSize = it2->size();
                                 strcpy(currentLine, it2->c_str());
                                 
-
-
-                                
                             }//THEN GO TO THE NEXT
                             //ELSE IF YOU'VE DISPLAYED THE END ALREADY, THEN BEEP
                             else if(upArrowOnce == true){
                                 write(STDOUT_FILENO, soundString.c_str(),1);
                                 //cout << " ayy lmao" << endl;
                             }
-                            //ELSE IF YOU'RE AT THE END, THEN DISPLAY IT
-                            else{
-                                clearSTDOUT(currentLineSize, currentLine);
-                                write(STDOUT_FILENO, it2->c_str(), it2->size());
-                                //cout << " the end" << endl;
-
-                                currentLineSize = it2->size();
-                                strcpy(currentLine, it2->c_str());
-                                //cout << CurrecurrentLine << endl;
-                                //cout << "current line IS" << currentLine << endl;
-                                upArrowOnce = true;
-                            }//if this is the end
                         }
                     }
                     //IF DOWN ARROW 'B'
@@ -261,7 +248,7 @@ int main(int argc, char *argv[]){
                             clearSTDOUT(currentLineSize, currentLine);
                             //IF ITERATOR NOT AT BEGINNING OF VECTOR
                             if(it2 != myVector.begin()){
-                            	it2--;
+                                it2--;
                                 write(STDOUT_FILENO, it2->c_str(), it2->size());
                                 //cout << "yee " << endl;
                                 currentLineSize = it2->size();
