@@ -38,8 +38,8 @@ void SetNonCanonicalMode(int fd, struct termios *savedattributes){
 }
 
 void execCommand(string toExec, vector<string> arguments){
-    if(arguments.empty())
-        cout << "nothing here" << endl;
+    // if(arguments.empty())
+    //     cout << "nothing here" << endl;
 }
 
 void parseCommand(string command){
@@ -150,6 +150,7 @@ int main(int argc, char *argv[]){
     int historyCounter = 0;
     bool upArrowOnce = false;
     bool downArrowOnce = false;
+    bool firstTimeVisitingBegin = true;
     
 //    string
 
@@ -201,34 +202,48 @@ int main(int argc, char *argv[]){
                         else{
 
                             //IF YOU'RE NOT AT THE END OF THE VECTOR
-                            if( (it2 != myVector.end() - 1) ){
+                            //cout << "up: " << upArrowOnce << endl;
+                            if(it2 == myVector.begin() && firstTimeVisitingBegin){
+	                            firstTimeVisitingBegin = false;
+	                            clearSTDOUT(currentLineSize, currentLine);
+	                            write(STDOUT_FILENO, it2->c_str(), it2->size());
+	                            currentLineSize = it2->size();
+	                            strcpy(currentLine, it2->c_str());	
+                            }
+                            else if( (it2 != myVector.end() - 1) ){
+
+                            	++it2;
                                 //cout << "BEFORE CURRENT LINE IS: " << currentLine << endl;
                                 //cout << " our it2S tring is :" << it2->c_str() << endl;
                                 clearSTDOUT(currentLineSize, currentLine);
                                 //cout << "current line size is: " << currentLineSize << endl;
                                // cout << "CURRENT LINE IS: " << currentLine << endl;
 
+                                
                                 write(STDOUT_FILENO, it2->c_str(), it2->size());
 
 
                                 currentLineSize = it2->size();
                                 strcpy(currentLine, it2->c_str());
+                                
 
 
-                                ++it2;
+                                
                             }//THEN GO TO THE NEXT
                             //ELSE IF YOU'VE DISPLAYED THE END ALREADY, THEN BEEP
                             else if(upArrowOnce == true){
                                 write(STDOUT_FILENO, soundString.c_str(),1);
+                                //cout << " ayy lmao" << endl;
                             }
                             //ELSE IF YOU'RE AT THE END, THEN DISPLAY IT
                             else{
                                 clearSTDOUT(currentLineSize, currentLine);
                                 write(STDOUT_FILENO, it2->c_str(), it2->size());
-
+                                //cout << " the end" << endl;
 
                                 currentLineSize = it2->size();
                                 strcpy(currentLine, it2->c_str());
+                                //cout << CurrecurrentLine << endl;
                                 //cout << "current line IS" << currentLine << endl;
                                 upArrowOnce = true;
                             }//if this is the end
@@ -238,6 +253,7 @@ int main(int argc, char *argv[]){
                     else if(RXChar == 0x42){ // 'B' down arrow
                         upArrowOnce = false;
 
+
                         if(myVector.empty()){
                             write(STDOUT_FILENO, soundString.c_str(),1);
                         }
@@ -245,20 +261,22 @@ int main(int argc, char *argv[]){
                             clearSTDOUT(currentLineSize, currentLine);
                             //IF ITERATOR NOT AT BEGINNING OF VECTOR
                             if(it2 != myVector.begin()){
-                                it2--;
+                            	it2--;
                                 write(STDOUT_FILENO, it2->c_str(), it2->size());
-
+                                //cout << "yee " << endl;
                                 currentLineSize = it2->size();
                                 strcpy(currentLine, it2->c_str());
+                                
 
                             }
                             else if(downArrowOnce == true){
                                 write(STDOUT_FILENO, soundString.c_str(),1);
+
                             }
                             else{
-                                downArrowOnce = true;
-                                
-                            }//else write onto screen
+                                downArrowOnce = true;  
+                                firstTimeVisitingBegin = true;                            
+                            }//else if at beginnign write onto screen
 
                         //printf("It was a down arrow\n");
                         }
@@ -273,11 +291,15 @@ int main(int argc, char *argv[]){
             //IF WE PRESSED ENTER AND THERE IS SOMETHING IN CURRENT LINE
             if(0x0a == RXChar && currentLineSize != 1){
                 //cout << "went into here" << endl;
+                firstTimeVisitingBegin = true;
+                upArrowOnce = false;
+                downArrowOnce = false;
                 historyCounter++;
 
 
                 //cout << "current line size is " << currentLineSize << endl;
                 //IF WE HAVE MORE THAN 10 IN OUR HISTORY
+                //cout << "history counter is " << historyCounter << endl;
                 if(historyCounter > 10){
                     myVector.pop_back();
                     historyCounter--;
@@ -290,7 +312,6 @@ int main(int argc, char *argv[]){
                 //INSERTS CURRENTLINE INTO VECTOR
                 string str(currentLine);
                 myVector.insert(myVector.begin(), str);
-
                 //CALL PARSING FUNCTION
                 parseCommand(str);
 
