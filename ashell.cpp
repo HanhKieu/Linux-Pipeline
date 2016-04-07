@@ -7,6 +7,8 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
+#include <sys/wait.h>
+#include <sstream>
 using namespace std;
 
 
@@ -35,6 +37,59 @@ void SetNonCanonicalMode(int fd, struct termios *savedattributes){
     tcsetattr(fd, TCSAFLUSH, &TermAttributes);
 }
 
+void execCommand(string toExec, vector<string> arguments){
+    if(arguments.empty())
+        cout << "nothing here" << endl;
+}
+
+void parseCommand(string command){
+    int numWords = 0;
+    stringstream ss(command); //parses based on space
+    string token;
+    string toExec; //actual command you'll execute
+    vector<string> arguments; //additional arguments
+    vector<string>::iterator itr;
+
+    while(ss >> token){
+        //if it's the first word you've seen, then it is the actual command to run
+        if(numWords == 0)
+            toExec = token;
+        //else, it's an argument to the command
+        else
+            arguments.push_back(token);
+
+        numWords++;
+
+    }
+
+    // itr = arguments.begin();
+    // while(itr != arguments.end()){
+    //     if(!((itr->c_str).indexOf('|')))
+    //         cout << "there's a pipe in here" << endl;
+
+    //     itr++;
+    // }
+
+    //call function to run command here
+    execCommand(toExec, arguments);
+}
+
+
+void myLS(){ //just forks, doesn't actually ls yet
+    int status;
+    pid_t my_pid = fork();
+
+    if(my_pid == 0){
+        //actually do ls
+//        exit(0);
+
+    }
+    else{
+        //wait for child to execute waitpid()
+        waitpid(my_pid, &status, 0);
+    }
+}
+
 
 void clearSTDOUT(int &sizeOfString, char *currentLine ){
     string deleteString("\b \b");
@@ -55,7 +110,6 @@ void clearSTDOUT(int &sizeOfString, char *currentLine ){
 // }
 
 void printCurrentDir(){ //http://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
-    //string space("")
     char buffer[1024];
     char *currentDir = getcwd(buffer, sizeof(buffer));
     
@@ -104,6 +158,7 @@ int main(int argc, char *argv[]){
     printCurrentDir();
     
     while(1){
+        myLS();
         read(STDIN_FILENO, &RXChar, 1);
 
         //IF IT IS A PRINTABLE CHARACTER
@@ -235,6 +290,9 @@ int main(int argc, char *argv[]){
                 //INSERTS CURRENTLINE INTO VECTOR
                 string str(currentLine);
                 myVector.insert(myVector.begin(), str);
+
+                //CALL PARSING FUNCTION
+                parseCommand(str);
 
                 it2 = myVector.begin();
                 numPrevCommands++;
