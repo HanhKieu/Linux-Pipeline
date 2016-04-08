@@ -276,7 +276,7 @@ int main(int argc, char *argv[]){
             }
 
             //IF WE PRESSED ENTER AND THERE IS SOMETHING IN CURRENT LINE
-            if(0x0a == RXChar && currentLineSize != 1){
+            if(0x0a == RXChar){
                 //cout << "went into here" << endl;
                 firstTimeVisitingBegin = true;
                 upArrowOnce = false;
