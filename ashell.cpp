@@ -118,6 +118,10 @@ void parseCommand(string currentLineUnparsed){
         myCd(currentLineVec);
 //        cout << "DON'T NEED TO FORK" << endl;
     }
+    else if(command == "exit"){
+        write(STDOUT_FILENO, "\n", 1);
+        exit(0);
+    }
     else{
         myFork(currentLineVec);
     }
