@@ -9,6 +9,9 @@
 #include <vector>
 #include <sys/wait.h>
 #include <sstream>
+#include <dirent.h>
+#include <stat.h>
+
 using namespace std;
 
 
