@@ -43,39 +43,31 @@ void execCommand(string toExec, vector<string> arguments){
 }
 
 void parseCommand(string command){
-    int numWords = 0;
     stringstream ss(command); //parses based on space
     string token;
-    string toExec; //actual command you'll execute
     vector<string> arguments; //additional arguments
     vector<string>::iterator itr;
 
     while(ss >> token){
-        //if it's the first word you've seen, then it is the actual command to run
-        if(numWords == 0)
-            toExec = token;
-        //else, it's an argument to the command
-        else
-            arguments.push_back(token);
-
-        numWords++;
+        arguments.push_back(token);
 
     }
 
-    // itr = arguments.begin();
-    // while(itr != arguments.end()){
-    //     if(!((itr->c_str).indexOf('|')))
-    //         cout << "there's a pipe in here" << endl;
 
+
+    //itr = arguments.begin();
+    // while(itr != arguments.end()){
+    //     // if(!((itr->c_str).indexOf('|')))
+    //     //     cout << "there's a pipe in here" << endl;
     //     itr++;
     // }
 
     //call function to run command here
-    execCommand(toExec, arguments);
+    //execCommand(toExec, arguments);
 }
 
 
-void myLS(){ //just forks, doesn't actually ls yet
+void myFork(){ 
     int status;
     pid_t my_pid = fork();
 
@@ -159,7 +151,7 @@ int main(int argc, char *argv[]){
     printCurrentDir();
     
     while(1){
-        myLS();
+        //myLS();
         read(STDIN_FILENO, &RXChar, 1);
 
         //IF IT IS A PRINTABLE CHARACTER
@@ -179,7 +171,7 @@ int main(int argc, char *argv[]){
                 write(STDOUT_FILENO, deleteString.c_str(), 3);
                 currentLineSize--;   
             }
-                  
+
             currentLine[currentLineSize] = 0;
         }
         //OTHERWISE
