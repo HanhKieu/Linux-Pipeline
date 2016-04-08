@@ -112,6 +112,11 @@ void parseCommand(string currentLineUnparsed){
 
     }
 
+    //IF EMPTY LINE ENTERED
+    if(currentLineVec.size() < 1)
+        return;
+    //ELSE SEG FAULT
+
     command = *(currentLineVec.begin());
 
     if(command == "cd"){
