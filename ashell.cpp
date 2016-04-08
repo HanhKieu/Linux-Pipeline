@@ -174,9 +174,12 @@ int main(int argc, char *argv[]){
         }
         //IF YOU PRESS BACKSPACE
         else if(0x7F == RXChar){
-            write(STDOUT_FILENO, deleteString.c_str(), 3);
-            if(currentLineSize >= 0)
-                currentLineSize--;
+            
+            if(currentLineSize >= 1){
+                write(STDOUT_FILENO, deleteString.c_str(), 3);
+                currentLineSize--;   
+            }
+                  
             currentLine[currentLineSize] = 0;
         }
         //OTHERWISE
