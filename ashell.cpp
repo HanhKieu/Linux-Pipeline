@@ -10,7 +10,7 @@
 #include <sys/wait.h>
 #include <sstream>
 #include <dirent.h>
-#include <stat.h>
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -40,24 +40,67 @@ void SetNonCanonicalMode(int fd, struct termios *savedattributes){
     tcsetattr(fd, TCSAFLUSH, &TermAttributes);
 }
 
-void execCommand(string toExec, vector<string> arguments){
-    // if(arguments.empty())
-    //     cout << "nothing here" << endl;
+
+void myLs(vector<string> currentLineVec){
+    DIR *myDir;
+    struct dirent *currentFile;
+    string tempString;
+
+    if(currentLineVec.size() > 1){
+        myDir = opendir(currentLineVec.at(1).c_str());
+    }
+    else{
+        myDir = opendir(".");
+    }
+
+    currentFile = readdir(myDir);
+
+    while(currentFile != NULL){
+        write(STDOUT_FILENO, "\n", 1);
+        string tempString(currentFile->d_name);
+        write(STDOUT_FILENO, tempString.c_str(), tempString.size());
+        currentFile = readdir(myDir);
+    }
 }
 
-void parseCommand(string command){
-    stringstream ss(command); //parses based on space
+void myFork(vector<string> currentLineVec){ 
+    int status;
+    pid_t my_pid = fork();
+    string command = *(currentLineVec.begin());
+
+    if(my_pid == 0){
+        if(command == "ls"){
+            myLs(currentLineVec);
+        }
+        exit(0);
+    }
+    else{
+        //wait for child to execute waitpid()
+        waitpid(my_pid, &status, 0);
+        //cout << "okay this ended" << endl;
+    }
+}
+
+void parseCommand(string currentLineUnparsed){
+    stringstream ss(currentLineUnparsed); //parses based on space
+    string command;
     string token;
-    vector<string> arguments; //additional arguments
+    vector<string> currentLineVec; //additional arguments
     vector<string>::iterator itr;
 
+
     while(ss >> token){
-        arguments.push_back(token);
+        currentLineVec.push_back(token);
 
     }
 
+    command = *(currentLineVec.begin());
 
-
+    if(command == "cd")
+        cout << "DON'T NEED TO FORK" << endl;
+    else{
+        myFork(currentLineVec);
+    }
     //itr = arguments.begin();
     // while(itr != arguments.end()){
     //     // if(!((itr->c_str).indexOf('|')))
@@ -66,25 +109,8 @@ void parseCommand(string command){
     // }
 
     //call function to run command here
-    //execCommand(toExec, arguments);
+
 }
-
-
-void myFork(){ 
-    int status;
-    pid_t my_pid = fork();
-
-    if(my_pid == 0){
-        //actually do ls
-//        exit(0);
-
-    }
-    else{
-        //wait for child to execute waitpid()
-        waitpid(my_pid, &status, 0);
-    }
-}
-
 
 void clearSTDOUT(int &sizeOfString, char *currentLine ){
     string deleteString("\b \b");
@@ -95,14 +121,6 @@ void clearSTDOUT(int &sizeOfString, char *currentLine ){
     }
     sizeOfString = 0;
 }
-//FUNCTION THAT CHANGES CURRENTLINE AND UPDATES ITS CURRENTLINESIZE
-
-// template <class myVectorIterator>
-// void updateCurrentLine(const char *currentLine, myVectorIterator it2){
-//     currentLine = it2->c_str();
-//     //it2->c_str()
-//    // cout << "   St ring is :" << str << endl;
-// }
 
 void printCurrentDir(){ //http://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
     char buffer[1024];
@@ -275,8 +293,6 @@ int main(int argc, char *argv[]){
 
             //IF WE PRESSED ENTER AND THERE IS SOMETHING IN CURRENT LINE
             if(0x0a == RXChar && currentLineSize != 0){
-                //cout << "went into here" << endl;
-                //cout << "current line size is " << currentLineSize << endl;
                 firstTimeVisitingBegin = true;
                 upArrowOnce = false;
                 downArrowOnce = false;
