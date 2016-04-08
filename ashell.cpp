@@ -81,6 +81,24 @@ void myFork(vector<string> currentLineVec){
     }
 }
 
+void myCd(vector<string> currentLineVec){
+    string errorMessage = "Error changing directory.";
+    if(currentLineVec.size() > 1){
+        //cd to first argument
+        if((chdir(currentLineVec.at(1).c_str()))){
+            //unsuccesful cd
+            write(STDOUT_FILENO, "\n", 1);
+            write(STDOUT_FILENO, errorMessage.c_str(), errorMessage.size());
+        }
+            
+    }
+    else{
+        //cd to home
+        chdir(getenv("HOME"));
+    }
+        
+}
+
 void parseCommand(string currentLineUnparsed){
     stringstream ss(currentLineUnparsed); //parses based on space
     string command;
@@ -96,8 +114,10 @@ void parseCommand(string currentLineUnparsed){
 
     command = *(currentLineVec.begin());
 
-    if(command == "cd")
-        cout << "DON'T NEED TO FORK" << endl;
+    if(command == "cd"){
+        myCd(currentLineVec);
+//        cout << "DON'T NEED TO FORK" << endl;
+    }
     else{
         myFork(currentLineVec);
     }
