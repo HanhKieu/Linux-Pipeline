@@ -276,8 +276,9 @@ int main(int argc, char *argv[]){
             }
 
             //IF WE PRESSED ENTER AND THERE IS SOMETHING IN CURRENT LINE
-            if(0x0a == RXChar){
+            if(0x0a == RXChar && currentLineSize != 0){
                 //cout << "went into here" << endl;
+                //cout << "current line size is " << currentLineSize << endl;
                 firstTimeVisitingBegin = true;
                 upArrowOnce = false;
                 downArrowOnce = false;
@@ -312,8 +313,8 @@ int main(int argc, char *argv[]){
             }
             //ELSE IF WE PRESS ENTER WITH EMPTY LINE
             else if(0x0a == RXChar ){
-                currentLine[currentLineSize-1] = 0;
-                currentLineSize = 0;
+                write(STDOUT_FILENO, "\n", 1);
+                printCurrentDir();
             }
         }
     }
