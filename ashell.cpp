@@ -72,6 +72,25 @@ void myFork(vector<string> currentLineVec){
         if(command == "ls"){
             myLs(currentLineVec);
         }
+        else{
+            int count = 0;
+            vector<string>::iterator itr;
+
+            itr = currentLineVec.begin();
+            while(itr != currentLineVec.end()){
+                count++;
+                itr++;
+            } //COUNTS NUMBER OF COMMANDS TO INIT THE CHAR** WITH 
+
+            char* currentLine[count+1];
+            for(int i = 0; i < count; i++){
+                currentLine[i] = const_cast<char*>(currentLineVec.at(i).c_str());
+            }
+
+            currentLine[count] = NULL;
+
+            execvp(currentLine[0], currentLine);
+        }
         exit(0);
     }
     else{
