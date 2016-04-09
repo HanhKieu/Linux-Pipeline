@@ -41,6 +41,15 @@ void SetNonCanonicalMode(int fd, struct termios *savedattributes){
 }
 
 
+void printWorkingDirectory(){
+    char buffer[1024];
+    char *currentDir = getcwd(buffer, sizeof(buffer));
+    string tempString(currentDir);
+    write(STDOUT_FILENO, "\n", 1);
+    write(STDOUT_FILENO, tempString.c_str(), tempString.size());
+
+}
+
 void lsStringGenerator(string path){
     struct stat statBuf;
     //scout << stat(currentFile) << endl;
@@ -121,6 +130,9 @@ void myFork(vector<string> currentLineVec){
     if(my_pid == 0){
         if(command == "ls"){
             myLs(currentLineVec);
+        }
+        else if(command == "pwd"){
+            printWorkingDirectory();
         }
         exit(0);
     }
