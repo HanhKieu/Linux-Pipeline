@@ -177,6 +177,7 @@ void myFork(vector<string> currentLineVec){
                 }
                 findFile(path, currentLineVec.at(1));
             }
+        }
         else{
             int count = 0;
             vector<string>::iterator itr;
