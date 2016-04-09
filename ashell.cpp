@@ -40,17 +40,101 @@ void SetNonCanonicalMode(int fd, struct termios *savedattributes){
     tcsetattr(fd, TCSAFLUSH, &TermAttributes);
 }
 
+void findFile(string givenPath, string stringToFind){
+    DIR *myDir;
+    struct dirent *currentFile;
+    struct stat statBuf;
+    string tempString;
+    string path;
+    myDir = opendir(givenPath.c_str());
+    currentFile = readdir(myDir);
+
+    while(currentFile != NULL){
+        //write(STDOUT_FILENO, "\n", 1);
+        string tempString(currentFile->d_name);
+        //cout << tempString << endl;
+        string filePath(givenPath + "/" + tempString);
+        stat(filePath.c_str(), &statBuf);
+
+        if(statBuf.st_mode & S_IFDIR && (tempString != ".") && (tempString != "..") ){
+            findFile(filePath, stringToFind);
+        }
+        else if(currentFile->d_name == stringToFind){
+            write(STDOUT_FILENO, "\n", 1);
+            write(STDOUT_FILENO, filePath.c_str(), filePath.size());
+        }
+
+        currentFile = readdir(myDir);
+    }
+
+}
+void printWorkingDirectory(){
+    char buffer[1024];
+    char *currentDir = getcwd(buffer, sizeof(buffer));
+    string tempString(currentDir);
+    write(STDOUT_FILENO, "\n", 1);
+    write(STDOUT_FILENO, tempString.c_str(), tempString.size());
+}
+
+void lsStringGenerator(string path){
+    struct stat statBuf;
+    //scout << stat(currentFile) << endl;
+    stat(path.c_str(), &statBuf);
+    if(statBuf.st_mode & S_IFDIR)
+        write(STDOUT_FILENO, "d", 1);
+    else
+        write(STDOUT_FILENO, "-", 1);
+    if(statBuf.st_mode & S_IRUSR)
+        write(STDOUT_FILENO, "r", 1);
+    else
+        write(STDOUT_FILENO, "-", 1);
+    if(statBuf.st_mode & S_IWUSR)
+        write(STDOUT_FILENO, "w", 1);
+    else
+        write(STDOUT_FILENO, "-", 1);
+    if(statBuf.st_mode & S_IXUSR)
+        write(STDOUT_FILENO, "x", 1);
+    else
+        write(STDOUT_FILENO, "-", 1);
+    if(statBuf.st_mode & S_IRGRP)
+        write(STDOUT_FILENO, "r", 1);
+    else
+        write(STDOUT_FILENO, "-", 1);
+    if(statBuf.st_mode & S_IWGRP)
+        write(STDOUT_FILENO, "w", 1);
+    else
+        write(STDOUT_FILENO, "-", 1);
+    if(statBuf.st_mode & S_IXGRP)
+        write(STDOUT_FILENO, "x", 1);
+    else
+        write(STDOUT_FILENO, "-", 1);
+    if(statBuf.st_mode & S_IROTH)
+        write(STDOUT_FILENO, "r", 1);
+    else
+        write(STDOUT_FILENO, "-", 1);
+    if(statBuf.st_mode & S_IWOTH)
+        write(STDOUT_FILENO, "w", 1);
+    else
+        write(STDOUT_FILENO, "-", 1);
+    if(statBuf.st_mode & S_IXOTH)
+        write(STDOUT_FILENO, "x", 1);
+    else
+        write(STDOUT_FILENO, "-", 1);
+    write(STDOUT_FILENO, " ", 1);
+}
 
 void myLs(vector<string> currentLineVec){
     DIR *myDir;
     struct dirent *currentFile;
     string tempString;
-
+    string argument;
     if(currentLineVec.size() > 1){
         myDir = opendir(currentLineVec.at(1).c_str());
+        argument = currentLineVec.at(1);
     }
     else{
         myDir = opendir(".");
+        argument = ".";
     }
 
     currentFile = readdir(myDir);
@@ -58,6 +142,7 @@ void myLs(vector<string> currentLineVec){
     while(currentFile != NULL){
         write(STDOUT_FILENO, "\n", 1);
         string tempString(currentFile->d_name);
+        lsStringGenerator( argument + "/" + tempString);
         write(STDOUT_FILENO, tempString.c_str(), tempString.size());
         currentFile = readdir(myDir);
     }
@@ -65,6 +150,7 @@ void myLs(vector<string> currentLineVec){
 
 void myFork(vector<string> currentLineVec){ 
     int status;
+    string path;
     pid_t my_pid = fork();
     string command = *(currentLineVec.begin());
 
@@ -72,6 +158,25 @@ void myFork(vector<string> currentLineVec){
         if(command == "ls"){
             myLs(currentLineVec);
         }
+
+        else if(command == "pwd"){
+            printWorkingDirectory();
+        }
+        else if(command == "ff"){
+            if(currentLineVec.size() == 1){
+                string tempString("ff command requires a filename!");
+                write(STDOUT_FILENO, "\n", 1);
+                write(STDOUT_FILENO, tempString.c_str(), tempString.size());
+            }
+            else{
+                if(currentLineVec.size() >= 3){
+                    path = currentLineVec.at(2);
+                }
+                else{
+                    path = ".";
+                }
+                findFile(path, currentLineVec.at(1));
+            }
         else{
             int count = 0;
             vector<string>::iterator itr;
