@@ -40,14 +40,40 @@ void SetNonCanonicalMode(int fd, struct termios *savedattributes){
     tcsetattr(fd, TCSAFLUSH, &TermAttributes);
 }
 
+void findFile(string givenPath, string stringToFind){
+    DIR *myDir;
+    struct dirent *currentFile;
+    struct stat statBuf;
+    string tempString;
+    string path;
+    myDir = opendir(givenPath.c_str());
+    currentFile = readdir(myDir);
 
+    while(currentFile != NULL){
+        //write(STDOUT_FILENO, "\n", 1);
+        string tempString(currentFile->d_name);
+        //cout << tempString << endl;
+        string filePath(givenPath + "/" + tempString);
+        stat(filePath.c_str(), &statBuf);
+
+        if(statBuf.st_mode & S_IFDIR && (tempString != ".") && (tempString != "..") ){
+            findFile(filePath, stringToFind);
+        }
+        else if(currentFile->d_name == stringToFind){
+            write(STDOUT_FILENO, "\n", 1);
+            write(STDOUT_FILENO, filePath.c_str(), filePath.size());
+        }
+
+        currentFile = readdir(myDir);
+    }
+
+}
 void printWorkingDirectory(){
     char buffer[1024];
     char *currentDir = getcwd(buffer, sizeof(buffer));
     string tempString(currentDir);
     write(STDOUT_FILENO, "\n", 1);
     write(STDOUT_FILENO, tempString.c_str(), tempString.size());
-
 }
 
 void lsStringGenerator(string path){
@@ -124,6 +150,7 @@ void myLs(vector<string> currentLineVec){
 
 void myFork(vector<string> currentLineVec){ 
     int status;
+    string path;
     pid_t my_pid = fork();
     string command = *(currentLineVec.begin());
 
@@ -133,6 +160,22 @@ void myFork(vector<string> currentLineVec){
         }
         else if(command == "pwd"){
             printWorkingDirectory();
+        }
+        else if(command == "ff"){
+            if(currentLineVec.size() == 1){
+                string tempString("ff command requires a filename!");
+                write(STDOUT_FILENO, "\n", 1);
+                write(STDOUT_FILENO, tempString.c_str(), tempString.size());
+            }
+            else{
+                if(currentLineVec.size() >= 3){
+                    path = currentLineVec.at(2);
+                }
+                else{
+                    path = ".";
+                }
+                findFile(path, currentLineVec.at(1));
+            }
         }
         exit(0);
     }
