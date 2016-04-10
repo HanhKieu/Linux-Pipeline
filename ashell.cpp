@@ -82,8 +82,10 @@ void findFile(string givenPath, string stringToFind){
         string tempString(currentFile->d_name);
         //cout << tempString << endl;
         string filePath(givenPath + "/" + tempString);
+        cout << "file path is  " << filePath << endl;
         stat(filePath.c_str(), &statBuf);
 
+        //IF ITS A DIRECTORY
         if(statBuf.st_mode & S_IFDIR && (tempString != ".") && (tempString != "..") ){
             findFile(filePath, stringToFind);
         }
@@ -96,12 +98,15 @@ void findFile(string givenPath, string stringToFind){
     }
 
 }
-void printWorkingDirectory(){
+void printWorkingDirectory(bool foundRedirect){
     char buffer[1024];
     char *currentDir = getcwd(buffer, sizeof(buffer));
     string tempString(currentDir);
-    write(STDOUT_FILENO, "\n", 1);
+    if(!foundRedirect)
+        write(STDOUT_FILENO, "\n", 1);
     write(STDOUT_FILENO, tempString.c_str(), tempString.size());
+    if(foundRedirect)
+        write(STDOUT_FILENO, "\n", 1);
 }
 
 void lsStringGenerator(string path){
@@ -196,19 +201,6 @@ void myRedirect(vector<string> myVector){
     }
     dup2(fileToOpen, STDOUT_FILENO);
 
-
-
-    // if(currentLineVec.at(0) == "ls"){
-    //     currentLineVec.pop_back();
-    //     currentLineVec.pop_back();
-    //     myLs(currentLineVec);
-    // }
-
-
-    // while(it != currentLineVec.end()){
-    //     cout << *it << endl;
-    //     it++;
-    // }
 }
 
 //SINCE THE INDEX ALTERNATES, NEED TO SWAP AFTER EACH READ/WRITE
@@ -273,6 +265,7 @@ void myFork(vector < vector<string> > vectorOfCommands){
     bool foundRedirect = false;
     vector <string> finalCommandLine;
     string command;
+    string path;
 
     //1 MEANS WRITE, 0 MEANS READ
     int readOrWriteIndex = 1;
@@ -310,11 +303,29 @@ void myFork(vector < vector<string> > vectorOfCommands){
             if(command == "ls"){
                 myLs(finalCommandLine, foundRedirect);
             }
-
+            else if(command == "pwd"){
+                printWorkingDirectory(foundRedirect);    
+            }
+            else if(command == "ff"){
+                if(finalCommandLine.size() == 1){
+                    string tempString("ff command requires a filename!");
+                    write(STDOUT_FILENO, "\n", 1);
+                    write(STDOUT_FILENO, tempString.c_str(), tempString.size());
+                }
+                else{
+                    if(finalCommandLine.size() >= 3){
+                        path = finalCommandLine.at(2);
+                    }
+                    else{
+                        path = ".";
+                    }
+                    findFile(path, finalCommandLine.at(1));
+                }
+            }
 
 
             exit(0);
-        }
+            }
         // //ELSE IF YOU ARE THE PARENT
         else{
             wait(&waitVar);
