@@ -17,6 +17,32 @@ using namespace std;
 
 //http://codewiki.wikidot.com/c:system-calls:dup2
 
+
+void printOutVectorOfVectors(vector< vector<string> > vectorOfCommands){
+    vector<string>::iterator column;
+    vector< vector<string> >::iterator row;
+    cout << endl;
+    for(row = vectorOfCommands.begin(); row != vectorOfCommands.end(); row++){
+        cout << "start-------------" << endl;
+
+        for( column = row->begin(); column != row->end(); column++){
+
+            cout << *column << endl;
+        }
+        cout << "end------------" << endl;
+        cout << endl;
+    }
+}
+
+void printOutSingleVector(vector<string> myVector){
+    vector<string>::iterator row;
+    for( row = myVector.begin(); row != myVector.end(); row++){
+
+            cout << *row << endl;
+        }
+
+}
+
 void ResetCanonicalMode(int fd, struct termios *savedattributes){
     tcsetattr(fd, TCSANOW, savedattributes);
 }
@@ -149,96 +175,273 @@ void myLs(vector<string> currentLineVec){
     }
 }
 
-void myRedirect(vector<string> currentLineVec){
-    vector<string>::iterator it = currentLineVec.begin();
+void myRedirect(vector<string> myVector){
     //OPENS FILE WITH WRITE ONLY FLAG http://pubs.opengroup.org/onlinepubs/009695399/functions/open.html
+    string filename( *(myVector.end() - 1) );
+    string typeOfRedirect( *(myVector.end() - 2) );
 
-    int fileToOpen = open((currentLineVec.end() - 1)->c_str(), O_WRONLY | O_CREAT);
+    cout << filename << endl;
+    cout << typeOfRedirect << endl;
+    int fileToOpen = open(filename.c_str(), O_WRONLY | O_CREAT);
     if(fileToOpen < 0){
         cout << "ya don fucked up " << endl;
     }
     dup2(fileToOpen, STDOUT_FILENO);
 
-    if(currentLineVec.at(0) == "ls"){
-        currentLineVec.pop_back();
-        currentLineVec.pop_back();
-        myLs(currentLineVec);
-    }
+
+
+    // if(currentLineVec.at(0) == "ls"){
+    //     currentLineVec.pop_back();
+    //     currentLineVec.pop_back();
+    //     myLs(currentLineVec);
+    // }
 
 
     // while(it != currentLineVec.end()){
     //     cout << *it << endl;
     //     it++;
     // }
-
-
 }
 
-void myFork(vector<string> currentLineVec){ 
-    int status;
-    vector<string>::iterator it = currentLineVec.begin();
-    string path;
-    pid_t my_pid = fork();
-    string command = *(currentLineVec.begin());
+//SINCE THE INDEX ALTERNATES, NEED TO SWAP AFTER EACH READ/WRITE
+int swapReadWriteIndex(int readWriteIndex){
+    if(readWriteIndex == 0)
+        return 1;
+    else
+        return 0;
+}
 
-    if(my_pid == 0){
-        if(command == "ls"){
-            if(currentLineVec.size() > 1){
-                if(currentLineVec.at(1) == ">") {
-                    myRedirect(currentLineVec);
-                }}
-                else{
-                    myLs(currentLineVec);
-                }
-        }
+bool checkForRedirect(vector<string> myVector){
+    vector<string>::iterator row;
+    for( row = myVector.begin(); row != myVector.end(); row++){
+        if( *row == "<" || *row == ">")
+            return true;
+    }
 
-        else if(command == "pwd"){
-            printWorkingDirectory();
-        }
-        else if(command == "ff"){
-            if(currentLineVec.size() == 1){
-                string tempString("ff command requires a filename!");
-                write(STDOUT_FILENO, "\n", 1);
-                write(STDOUT_FILENO, tempString.c_str(), tempString.size());
-            }
-            else{
-                if(currentLineVec.size() >= 3){
-                    path = currentLineVec.at(2);
-                }
-                else{
-                    path = ".";
-                }
-                findFile(path, currentLineVec.at(1));
-            }
+    return false;
+}
+
+vector < vector<string> > splitCommandByRedirect(vector <string> currentLineVec){
+    vector<string>::iterator itr;
+    itr = currentLineVec.begin();
+    vector < vector<string> > vectorVec;
+    vector<string> temp;
+    int numVectors = 1;
+    //  cout << "New vector contains: " << endl;
+    // cout << *itr << endl;
+    while(itr != currentLineVec.end()){
+        if( *itr == "<" || *itr == ">"){
+            vectorVec.push_back(temp);
+            temp.clear();
+            // cout << "New vector contains: " << endl;
+            // cout << *itr << endl;
+            temp.push_back(*itr);
+            numVectors++;
         }
         else{
-            int count = 0;
-            vector<string>::iterator itr;
+            temp.push_back(*itr);
+             // cout << *itr << endl;
+        }
 
-            itr = currentLineVec.begin();
-            while(itr != currentLineVec.end()){
-                count++;
-                itr++;
-            } //COUNTS NUMBER OF COMMANDS TO INIT THE CHAR** WITH 
+        itr++;
 
-            char* currentLine[count+1];
-            for(int i = 0; i < count; i++){
-                currentLine[i] = const_cast<char*>(currentLineVec.at(i).c_str());
+    }
+    //CATCHES ALL STRINGS AFTER LAST <, OR > CHAR
+    if(!temp.empty())
+        vectorVec.push_back(temp);
+
+    return vectorVec;
+}
+
+void myFork(vector < vector<string> > vectorOfCommands){ 
+
+    pid_t myPID;
+    vector<string> currentCommand;
+    int numberOfPipes = vectorOfCommands.size() - 1;
+    int numberOfChildren = vectorOfCommands.size();
+    int arr[numberOfPipes][2];
+    int waitVar;
+    int fdIndex = 0;
+    vector <string> finalCommandLine;
+    string command;
+
+
+    //1 MEANS WRITE, 0 MEANS READ
+    int readOrWriteIndex = 1;
+
+
+    //CREATE PIPES
+    for(int i = 0; i < numberOfPipes; i++){
+        pipe(arr[i]);
+    }
+
+
+    //ITERATE THROUGH EACH CHILD
+    for(int i = 0; i < numberOfChildren; i++){
+        myPID = fork();
+        fdIndex++;
+
+        currentCommand = vectorOfCommands[i];
+
+        // //IF YOU ARE THE CHILD
+        if(myPID == 0){
+            vector < vector<string> > redirectCommandParsed;
+            finalCommandLine = currentCommand;
+            if(checkForRedirect(currentCommand)){
+                redirectCommandParsed = splitCommandByRedirect(currentCommand);
+                //printOutVectorOfVectors(redirectCommandParsed);
+                myRedirect( *(redirectCommandParsed.end() - 1 ) );
+                finalCommandLine = *(redirectCommandParsed.begin());
+                
             }
 
-            currentLine[count] = NULL;
+            //PIPE HERE
+            command = *(finalCommandLine.begin());
+            if(command == "ls"){
+                myLs(finalCommandLine);
+            }
 
-            execvp(currentLine[0], currentLine);
+
+
+            exit(0);
         }
-        cout << "made it to exit" << endl;
-        exit(0);
-    }
-    else{
-        //wait for child to execute waitpid()
-        waitpid(my_pid, &status, 0);
-        //cout << "okay this ended" << endl;
+        // //ELSE IF YOU ARE THE PARENT
+        else{
+            wait(&waitVar);
+        }
+
     }
 }
+    //for(int i = vectorOfCommands.size() - 1;)
+    // int status;
+    // vector<string>::iterator it = currentLineVec.begin();
+    // string path;
+    // pid_t my_pid = fork();
+    // string command = *(currentLineVec.begin());
+
+    // if(my_pid == 0){
+    //     if(command == "ls"){
+    //         if(currentLineVec.size() > 1){
+    //             if(currentLineVec.at(1) == ">") {
+    //                 myRedirect(currentLineVec);
+    //             }}
+    //             else{
+    //                 myLs(currentLineVec);
+    //             }
+    //     }
+
+    //     else if(command == "pwd"){
+    //         printWorkingDirectory();
+    //     }
+    //     else if(command == "ff"){
+    //         if(currentLineVec.size() == 1){
+    //             string tempString("ff command requires a filename!");
+    //             write(STDOUT_FILENO, "\n", 1);
+    //             write(STDOUT_FILENO, tempString.c_str(), tempString.size());
+    //         }
+    //         else{
+    //             if(currentLineVec.size() >= 3){
+    //                 path = currentLineVec.at(2);
+    //             }
+    //             else{
+    //                 path = ".";
+    //             }
+    //             findFile(path, currentLineVec.at(1));
+    //         }
+    //     }
+    //     else{
+    //         int count = 0;
+    //         vector<string>::iterator itr;
+
+    //         itr = currentLineVec.begin();
+    //         while(itr != currentLineVec.end()){
+    //             count++;
+    //             itr++;
+    //         } //COUNTS NUMBER OF COMMANDS TO INIT THE CHAR** WITH 
+
+    //         char* currentLine[count+1];
+    //         for(int i = 0; i < count; i++){
+    //             currentLine[i] = const_cast<char*>(currentLineVec.at(i).c_str());
+    //         }
+
+    //         currentLine[count] = NULL;
+
+    //         execvp(currentLine[0], currentLine);
+    //     }
+    //     cout << "made it to exit" << endl;
+    //     exit(0);
+    // }
+    // else{
+    //     //wait for child to execute waitpid()
+    //     waitpid(my_pid, &status, 0);
+    //     //cout << "okay this ended" << endl;
+    // }
+
+// void myFork(vector<string> currentLineVec){ 
+//     int status;
+//     vector<string>::iterator it = currentLineVec.begin();
+//     string path;
+//     pid_t my_pid = fork();
+//     string command = *(currentLineVec.begin());
+
+//     if(my_pid == 0){
+//         if(command == "ls"){
+//             if(currentLineVec.size() > 1){
+//                 if(currentLineVec.at(1) == ">") {
+//                     myRedirect(currentLineVec);
+//                 }}
+//                 else{
+//                     myLs(currentLineVec);
+//                 }
+//         }
+
+//         else if(command == "pwd"){
+//             printWorkingDirectory();
+//         }
+//         else if(command == "ff"){
+//             if(currentLineVec.size() == 1){
+//                 string tempString("ff command requires a filename!");
+//                 write(STDOUT_FILENO, "\n", 1);
+//                 write(STDOUT_FILENO, tempString.c_str(), tempString.size());
+//             }
+//             else{
+//                 if(currentLineVec.size() >= 3){
+//                     path = currentLineVec.at(2);
+//                 }
+//                 else{
+//                     path = ".";
+//                 }
+//                 findFile(path, currentLineVec.at(1));
+//             }
+//         }
+//         else{
+//             int count = 0;
+//             vector<string>::iterator itr;
+
+//             itr = currentLineVec.begin();
+//             while(itr != currentLineVec.end()){
+//                 count++;
+//                 itr++;
+//             } //COUNTS NUMBER OF COMMANDS TO INIT THE CHAR** WITH 
+
+//             char* currentLine[count+1];
+//             for(int i = 0; i < count; i++){
+//                 currentLine[i] = const_cast<char*>(currentLineVec.at(i).c_str());
+//             }
+
+//             currentLine[count] = NULL;
+
+//             execvp(currentLine[0], currentLine);
+//         }
+//         cout << "made it to exit" << endl;
+//         exit(0);
+//     }
+//     else{
+//         //wait for child to execute waitpid()
+//         waitpid(my_pid, &status, 0);
+//         //cout << "okay this ended" << endl;
+//     }
+// }
 
 // ;
 
@@ -261,40 +464,95 @@ void myCd(vector<string> currentLineVec){
 }
 
 void parseCommand(string currentLineUnparsed){
-    stringstream ss(currentLineUnparsed); //parses based on space
+
     string command;
     string token;
     vector<string> currentLineVec; //additional arguments
     vector<string>::iterator itr;
+    vector<vector<string> > vectorVec;
+    vector<vector<string> > vectorVecItr;
+
+     // cout << endl;
+
+
+    //LOOP HERE TO ADD SPACES IN STRING SO STRINGSTREAM WORKS
+    for(unsigned int i = 0; i < currentLineUnparsed.size(); i++){
+        if(currentLineUnparsed.at(i) == '|' || currentLineUnparsed.at(i) == '>' || currentLineUnparsed.at(i) == '<'){
+//            cout << "Well I'm in here now...." << endl;
+            currentLineUnparsed.insert(i++, 1, ' ');
+//            numSpacesAdded++;
+            currentLineUnparsed.insert(i+1, 1, ' ');
+        }
+
+    }
+
+    // for(int i = 0; i < currentLineUnparsed.size(); i++){
+    //     cout << currentLineUnparsed.at(i) << endl;
+    // }
+
+    stringstream ss(currentLineUnparsed); //parses based on space
 
 
     while(ss >> token){
         currentLineVec.push_back(token);
-
     }
+
 
     //IF EMPTY LINE ENTERED
     if(currentLineVec.size() < 1)
         return;
-    //ELSE SEG FAULT
+    //ELSE IT WILL SEG FAULT
+
+    itr = currentLineVec.begin();
+
+    vector<string> temp;
+    int numVectors = 1;
+    //  cout << "New vector contains: " << endl;
+    // cout << *itr << endl;
+    while(itr != currentLineVec.end()){
+        if( *itr == "|" ){//|| *itr == "<" || *itr == ">"){
+            vectorVec.push_back(temp);
+            temp.clear();
+            // cout << "New vector contains: " << endl;
+            // cout << *itr << endl;
+            temp.push_back(*itr);
+            numVectors++;
+        }
+        else{
+            temp.push_back(*itr);
+             // cout << *itr << endl;
+        }
+
+        itr++;
+
+    }
+
+
+    //CATCHES ALL STRINGS AFTER LAST |, <, OR > CHAR
+    if(!temp.empty())
+        vectorVec.push_back(temp);
+
+
 
     command = *(currentLineVec.begin());
 
     if(command == "cd"){
         myCd(currentLineVec);
-//        cout << "DON'T NEED TO FORK" << endl;
     }
     else if(command == "exit"){
         write(STDOUT_FILENO, "\n", 1);
         exit(0);
     }
     else{
-        myFork(currentLineVec);
+        myFork(vectorVec);
     }
-    //itr = arguments.begin();
-    // while(itr != arguments.end()){
+
+    itr = currentLineVec.begin();
+
+    // cout << endl;
+    // while(itr != currentLineVec.end()){
     //     // if(!((itr->c_str).indexOf('|')))
-    //     //     cout << "there's a pipe in here" << endl;
+    //     cout << *itr << endl;
     //     itr++;
     // }
 
@@ -474,8 +732,6 @@ int main(int argc, char *argv[]){
                         }
                     }
                     //OTHERWISE ITS SOMETHING ELSE
-                    else
-                        printf("False alarm\n");
 
                 }
             }
@@ -502,9 +758,10 @@ int main(int argc, char *argv[]){
 
                 //INSERTS CURRENTLINE INTO VECTOR
                 string str(currentLine);
+                string temp(currentLine);
                 myVector.insert(myVector.begin(), str);
                 //CALL PARSING FUNCTION
-                parseCommand(str);
+                parseCommand(temp);
 
                 it2 = myVector.begin();
                 numPrevCommands++;
