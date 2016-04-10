@@ -240,6 +240,8 @@ void myFork(vector<string> currentLineVec){
     }
 }
 
+// ;
+
 void myCd(vector<string> currentLineVec){
     string errorMessage = "Error changing directory.";
     if(currentLineVec.size() > 1){
