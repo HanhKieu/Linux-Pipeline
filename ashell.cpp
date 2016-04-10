@@ -231,11 +231,37 @@ void parseCommand(string currentLineUnparsed){
     vector<string> currentLineVec; //additional arguments
     vector<string>::iterator itr;
 
+    char* currentLineChar;
+    currentLineChar = const_cast<char*>(currentLineUnparsed.c_str());
 
-    while(ss >> token){
-        currentLineVec.push_back(token);
+    int newCharStart = 0;
+    int newStrLength = 0;
 
+    for( int i = 0; i < currentLineUnparsed.size(); i++){
+        if(currentLineChar[i] == ' '){
+            string temp(currentLineUnparsed, newCharStart, newStrLength);
+            currentLineVec.push_back(temp);
+            newCharStart = i+1;
+            newStrLength = 0;
+        }
+
+        else if(currentLineChar[i] == '|' || currentLineChar[i] == '>' || currentLineChar[i] == '<'){
+            string temp(currentLineUnparsed, newCharStart, newStrLength-1);
+            currentLineVec.push_back(temp);
+            string temp2(currentLineChar, i, 1);
+            currentLineVec.push_back(temp2);            
+            newCharStart = i+1;
+            newStrLength = 0;
+        }
+
+        newStrLength++;
     }
+
+    string temp(currentLineUnparsed, newCharStart, currentLineUnparsed.size()-newCharStart);
+    currentLineVec.push_back(temp); 
+
+    // cout << currentLineUnparsed.size() << endl;
+
 
     //IF EMPTY LINE ENTERED
     if(currentLineVec.size() < 1)
@@ -255,12 +281,15 @@ void parseCommand(string currentLineUnparsed){
     else{
         myFork(currentLineVec);
     }
-    //itr = arguments.begin();
-    // while(itr != arguments.end()){
-    //     // if(!((itr->c_str).indexOf('|')))
-    //     //     cout << "there's a pipe in here" << endl;
-    //     itr++;
-    // }
+
+    itr = currentLineVec.begin();
+
+    cout << endl;
+    while(itr != currentLineVec.end()){
+        // if(!((itr->c_str).indexOf('|')))
+        cout << *itr << endl;
+        itr++;
+    }
 
     //call function to run command here
 
@@ -467,9 +496,10 @@ int main(int argc, char *argv[]){
 
                 //INSERTS CURRENTLINE INTO VECTOR
                 string str(currentLine);
+                string temp(currentLine);
                 myVector.insert(myVector.begin(), str);
                 //CALL PARSING FUNCTION
-                parseCommand(str);
+                parseCommand(temp);
 
                 it2 = myVector.begin();
                 numPrevCommands++;
