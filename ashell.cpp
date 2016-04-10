@@ -82,7 +82,6 @@ void findFile(string givenPath, string stringToFind){
         string tempString(currentFile->d_name);
         //cout << tempString << endl;
         string filePath(givenPath + "/" + tempString);
-        cout << "file path is  " << filePath << endl;
         stat(filePath.c_str(), &statBuf);
 
         //IF ITS A DIRECTORY
@@ -322,10 +321,29 @@ void myFork(vector < vector<string> > vectorOfCommands){
                     findFile(path, finalCommandLine.at(1));
                 }
             }
+            //EXEC
+            else{
+                int count = 0;
+                vector<string>::iterator itr;
 
+                itr = finalCommandLine.begin();
+                while(itr != finalCommandLine.end()){
+                    count++;
+                    itr++;
+                } //COUNTS NUMBER OF COMMANDS TO INIT THE CHAR** WITH 
+
+                char* currentLine[count+1];
+                for(int i = 0; i < count; i++){
+                    currentLine[i] = const_cast<char*>(finalCommandLine.at(i).c_str());
+                }
+
+                currentLine[count] = NULL;
+
+                execvp(currentLine[0], currentLine);
+            }
 
             exit(0);
-            }
+        }
         // //ELSE IF YOU ARE THE PARENT
         else{
             wait(&waitVar);
