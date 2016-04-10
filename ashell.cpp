@@ -337,14 +337,13 @@ void printCurrentDir(){ //http://stackoverflow.com/questions/298510/how-to-get-t
     char *currentDir = getcwd(buffer, sizeof(buffer));
     
     if(strlen(currentDir) < 16){
-        for(int i = 0; i < strlen(currentDir); i++){
+        for(unsigned int i = 0; i < strlen(currentDir); i++){
             write(STDOUT_FILENO, &currentDir[i], 1);
         }
     }
 
     else{//total path is more than 16 chars
 //stackoverflow.com/questions/32822988/get-the-last-token-of-a-string-in-c
-        const char delimiter[2] = "/";
         char *token, *last;
         last = token = strtok(currentDir, "/");
 
@@ -353,7 +352,7 @@ void printCurrentDir(){ //http://stackoverflow.com/questions/298510/how-to-get-t
 
         write(STDOUT_FILENO, "/.../", 5);
 
-        for(int i = 0; i < strlen(last); i++)
+        for(unsigned int i = 0; i < strlen(last); i++)
             write(STDOUT_FILENO, &last[i], 1);
     }
 
