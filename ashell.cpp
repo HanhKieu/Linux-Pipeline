@@ -11,6 +11,7 @@
 #include <sstream>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <fcntl.h> //for file open
 
 using namespace std;
 
@@ -151,8 +152,8 @@ void myLs(vector<string> currentLineVec){
 
 void myRedirect(vector<string> currentLineVec){
     vector<string>::iterator it = currentLineVec.begin();
-    int fileToOpen = open(currentLineVec.end() - 1);
-
+    //OPENS FILE WITH WRITE ONLY FLAG http://pubs.opengroup.org/onlinepubs/009695399/functions/open.html
+    int fileToOpen = open((currentLineVec.end() - 1)->c_str(), O_WRONLY, O_CREAT);
     dup2(fileToOpen, STDOUT_FILENO);
 
     if(currentLineVec.at(0) == "ls"){
