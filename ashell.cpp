@@ -151,11 +151,12 @@ void lsStringGenerator(string path){
     write(STDOUT_FILENO, " ", 1);
 }
 
-void myLs(vector<string> currentLineVec){
+void myLs(vector<string> currentLineVec, bool foundRedirect){
     DIR *myDir; 
     struct dirent *currentFile;
     string tempString;
     string argument;
+    int counter = 0;
     if(currentLineVec.size() > 1){
         myDir = opendir(currentLineVec.at(1).c_str());
         argument = currentLineVec.at(1);
@@ -167,22 +168,29 @@ void myLs(vector<string> currentLineVec){
     currentFile = readdir(myDir);
 
     while(currentFile != NULL){
-        write(STDOUT_FILENO, "\n", 1);
+        if(!foundRedirect || counter > 0){
+            write(STDOUT_FILENO, "\n", 1);
+        }
         string tempString(currentFile->d_name);
         lsStringGenerator( argument + "/" + tempString);
         write(STDOUT_FILENO, tempString.c_str(), tempString.size());
         currentFile = readdir(myDir);
+        counter++;
     }
+
+    if(foundRedirect){
+        write(STDOUT_FILENO, "\n", 1);
+    }
+    //cout << "ending " << endl;
 }
 
 void myRedirect(vector<string> myVector){
     //OPENS FILE WITH WRITE ONLY FLAG http://pubs.opengroup.org/onlinepubs/009695399/functions/open.html
     string filename( *(myVector.end() - 1) );
     string typeOfRedirect( *(myVector.end() - 2) );
+    mode_t mode = S_IRUSR | S_IWUSR | S_IXUSR;
 
-    cout << filename << endl;
-    cout << typeOfRedirect << endl;
-    int fileToOpen = open(filename.c_str(), O_WRONLY | O_CREAT);
+    int fileToOpen = open(filename.c_str(), O_WRONLY | O_CREAT, mode);
     if(fileToOpen < 0){
         cout << "ya don fucked up " << endl;
     }
@@ -262,9 +270,9 @@ void myFork(vector < vector<string> > vectorOfCommands){
     int arr[numberOfPipes][2];
     int waitVar;
     int fdIndex = 0;
+    bool foundRedirect = false;
     vector <string> finalCommandLine;
     string command;
-
 
     //1 MEANS WRITE, 0 MEANS READ
     int readOrWriteIndex = 1;
@@ -278,6 +286,7 @@ void myFork(vector < vector<string> > vectorOfCommands){
 
     //ITERATE THROUGH EACH CHILD
     for(int i = 0; i < numberOfChildren; i++){
+        foundRedirect = false;
         myPID = fork();
         fdIndex++;
 
@@ -292,13 +301,14 @@ void myFork(vector < vector<string> > vectorOfCommands){
                 //printOutVectorOfVectors(redirectCommandParsed);
                 myRedirect( *(redirectCommandParsed.end() - 1 ) );
                 finalCommandLine = *(redirectCommandParsed.begin());
+                foundRedirect = true;
                 
             }
 
             //PIPE HERE
             command = *(finalCommandLine.begin());
             if(command == "ls"){
-                myLs(finalCommandLine);
+                myLs(finalCommandLine, foundRedirect);
             }
 
 
