@@ -14,6 +14,7 @@
 
 using namespace std;
 
+//http://codewiki.wikidot.com/c:system-calls:dup2
 
 void ResetCanonicalMode(int fd, struct termios *savedattributes){
     tcsetattr(fd, TCSANOW, savedattributes);
@@ -148,14 +149,38 @@ void myLs(vector<string> currentLineVec){
     }
 }
 
+void myRedirect(vector<string> currentLineVec){
+    vector<string>::iterator it = currentLineVec.begin();
+    int fileToOpen = open(currentLineVec.end() - 1);
+
+    dup2(fileToOpen, STDOUT_FILENO);
+
+    if(currentLineVec.at(0) == "ls"){
+        myLs(currentLineVec);
+    }
+
+
+    // while(it != currentLineVec.end()){
+    //     cout << *it << endl;
+    //     it++;
+    // }
+
+
+}
+
 void myFork(vector<string> currentLineVec){ 
     int status;
+    vector<string>::iterator it = currentLineVec.begin();
     string path;
     pid_t my_pid = fork();
     string command = *(currentLineVec.begin());
 
     if(my_pid == 0){
         if(command == "ls"){
+            if(currentLineVec.at(1) == ">") {
+                myRedirect(currentLineVec);
+
+            }
             myLs(currentLineVec);
         }
 
