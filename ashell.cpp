@@ -225,42 +225,35 @@ void myCd(vector<string> currentLineVec){
 }
 
 void parseCommand(string currentLineUnparsed){
-    stringstream ss(currentLineUnparsed); //parses based on space
+
     string command;
     string token;
     vector<string> currentLineVec; //additional arguments
     vector<string>::iterator itr;
 
-    char* currentLineChar;
-    currentLineChar = const_cast<char*>(currentLineUnparsed.c_str());
+    cout << endl;
+    int numSpacesAdded = 0;
 
-    int newCharStart = 0;
-    int newStrLength = 0;
-
-    for( int i = 0; i < currentLineUnparsed.size(); i++){
-        if(currentLineChar[i] == ' '){
-            string temp(currentLineUnparsed, newCharStart, newStrLength);
-            currentLineVec.push_back(temp);
-            newCharStart = i+1;
-            newStrLength = 0;
+    for(int i = 0; i < currentLineUnparsed.size(); i++){
+        if(currentLineUnparsed.at(i) == '|' || currentLineUnparsed.at(i) == '>' || currentLineUnparsed.at(i) == '<'){
+            cout << "Well I'm in here now...." << endl;
+            currentLineUnparsed.insert(i++, 1, ' ');
+//            numSpacesAdded++;
+            currentLineUnparsed.insert(i+1, 1, ' ');
         }
-
-        else if(currentLineChar[i] == '|' || currentLineChar[i] == '>' || currentLineChar[i] == '<'){
-            string temp(currentLineUnparsed, newCharStart, newStrLength-1);
-            currentLineVec.push_back(temp);
-            string temp2(currentLineChar, i, 1);
-            currentLineVec.push_back(temp2);            
-            newCharStart = i+1;
-            newStrLength = 0;
-        }
-
-        newStrLength++;
+//            currentLineUnparsed.
     }
 
-    string temp(currentLineUnparsed, newCharStart, currentLineUnparsed.size()-newCharStart);
-    currentLineVec.push_back(temp); 
+    for(int i = 0; i < currentLineUnparsed.size(); i++){
+        cout << currentLineUnparsed.at(i) << endl;
+    }
 
-    // cout << currentLineUnparsed.size() << endl;
+    stringstream ss(currentLineUnparsed); //parses based on space
+
+
+    while(ss >> token){
+        currentLineVec.push_back(token);
+    }
 
 
     //IF EMPTY LINE ENTERED
