@@ -233,11 +233,11 @@ void parseCommand(string currentLineUnparsed){
     vector<vector<string> > vectorVec;
     vector<vector<string> > vectorVecItr;
 
-    cout << endl;
-    int numSpacesAdded = 0;
+     // cout << endl;
+
 
     //LOOP HERE TO ADD SPACES IN STRING SO STRINGSTREAM WORKS
-    for(int i = 0; i < currentLineUnparsed.size(); i++){
+    for(unsigned int i = 0; i < currentLineUnparsed.size(); i++){
         if(currentLineUnparsed.at(i) == '|' || currentLineUnparsed.at(i) == '>' || currentLineUnparsed.at(i) == '<'){
 //            cout << "Well I'm in here now...." << endl;
             currentLineUnparsed.insert(i++, 1, ' ');
@@ -262,26 +262,26 @@ void parseCommand(string currentLineUnparsed){
     //IF EMPTY LINE ENTERED
     if(currentLineVec.size() < 1)
         return;
-    //ELSE SEG FAULT
+    //ELSE IT WILL SEG FAULT
 
     itr = currentLineVec.begin();
 
     vector<string> temp;
     int numVectors = 1;
-    cout << "New vector contains: " << endl;
-//    cout << *itr << endl;
+    //  cout << "New vector contains: " << endl;
+    // cout << *itr << endl;
     while(itr != currentLineVec.end()){
-        if( *itr == "|" || *itr == "<" || *itr == ">"){
+        if( *itr == "|" ){//|| *itr == "<" || *itr == ">"){
             vectorVec.push_back(temp);
             temp.clear();
-            cout << "New vector contains: " << endl;
-            cout << *itr << endl;
+            // cout << "New vector contains: " << endl;
+            // cout << *itr << endl;
             temp.push_back(*itr);
             numVectors++;
         }
         else{
             temp.push_back(*itr);
-            cout << *itr << endl;
+             // cout << *itr << endl;
         }
 
         itr++;
@@ -299,14 +299,13 @@ void parseCommand(string currentLineUnparsed){
 
     if(command == "cd"){
         myCd(currentLineVec);
-//        cout << "DON'T NEED TO FORK" << endl;
     }
     else if(command == "exit"){
         write(STDOUT_FILENO, "\n", 1);
         exit(0);
     }
     else{
-        myFork(currentLineVec);
+        myFork(vectorVec[0]);
     }
 
     itr = currentLineVec.begin();
@@ -494,8 +493,6 @@ int main(int argc, char *argv[]){
                         }
                     }
                     //OTHERWISE ITS SOMETHING ELSE
-                    else
-                        printf("False alarm\n");
 
                 }
             }
