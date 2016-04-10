@@ -126,7 +126,7 @@ void lsStringGenerator(string path){
 }
 
 void myLs(vector<string> currentLineVec){
-    DIR *myDir;
+    DIR *myDir; 
     struct dirent *currentFile;
     string tempString;
     string argument;
@@ -138,7 +138,6 @@ void myLs(vector<string> currentLineVec){
         myDir = opendir(".");
         argument = ".";
     }
-
     currentFile = readdir(myDir);
 
     while(currentFile != NULL){
@@ -153,10 +152,16 @@ void myLs(vector<string> currentLineVec){
 void myRedirect(vector<string> currentLineVec){
     vector<string>::iterator it = currentLineVec.begin();
     //OPENS FILE WITH WRITE ONLY FLAG http://pubs.opengroup.org/onlinepubs/009695399/functions/open.html
-    int fileToOpen = open((currentLineVec.end() - 1)->c_str(), O_WRONLY, O_CREAT);
+
+    int fileToOpen = open((currentLineVec.end() - 1)->c_str(), O_WRONLY | O_CREAT);
+    if(fileToOpen < 0){
+        cout << "ya don fucked up " << endl;
+    }
     dup2(fileToOpen, STDOUT_FILENO);
 
     if(currentLineVec.at(0) == "ls"){
+        currentLineVec.pop_back();
+        currentLineVec.pop_back();
         myLs(currentLineVec);
     }
 
@@ -178,11 +183,13 @@ void myFork(vector<string> currentLineVec){
 
     if(my_pid == 0){
         if(command == "ls"){
-            if(currentLineVec.at(1) == ">") {
-                myRedirect(currentLineVec);
-
-            }
-            myLs(currentLineVec);
+            if(currentLineVec.size() > 1){
+                if(currentLineVec.at(1) == ">") {
+                    myRedirect(currentLineVec);
+                }}
+                else{
+                    myLs(currentLineVec);
+                }
         }
 
         else if(command == "pwd"){
@@ -223,6 +230,7 @@ void myFork(vector<string> currentLineVec){
 
             execvp(currentLine[0], currentLine);
         }
+        cout << "made it to exit" << endl;
         exit(0);
     }
     else{
