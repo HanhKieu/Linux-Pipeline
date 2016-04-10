@@ -230,23 +230,26 @@ void parseCommand(string currentLineUnparsed){
     string token;
     vector<string> currentLineVec; //additional arguments
     vector<string>::iterator itr;
+    vector<vector<string> > vectorVec;
+    vector<vector<string> > vectorVecItr;
 
     cout << endl;
     int numSpacesAdded = 0;
 
+    //LOOP HERE TO ADD SPACES IN STRING SO STRINGSTREAM WORKS
     for(int i = 0; i < currentLineUnparsed.size(); i++){
         if(currentLineUnparsed.at(i) == '|' || currentLineUnparsed.at(i) == '>' || currentLineUnparsed.at(i) == '<'){
-            cout << "Well I'm in here now...." << endl;
+//            cout << "Well I'm in here now...." << endl;
             currentLineUnparsed.insert(i++, 1, ' ');
 //            numSpacesAdded++;
             currentLineUnparsed.insert(i+1, 1, ' ');
         }
-//            currentLineUnparsed.
+
     }
 
-    for(int i = 0; i < currentLineUnparsed.size(); i++){
-        cout << currentLineUnparsed.at(i) << endl;
-    }
+    // for(int i = 0; i < currentLineUnparsed.size(); i++){
+    //     cout << currentLineUnparsed.at(i) << endl;
+    // }
 
     stringstream ss(currentLineUnparsed); //parses based on space
 
@@ -260,6 +263,37 @@ void parseCommand(string currentLineUnparsed){
     if(currentLineVec.size() < 1)
         return;
     //ELSE SEG FAULT
+
+    itr = currentLineVec.begin();
+
+    vector<string> temp;
+    int numVectors = 1;
+    cout << "New vector contains: " << endl;
+//    cout << *itr << endl;
+    while(itr != currentLineVec.end()){
+        if( *itr == "|" || *itr == "<" || *itr == ">"){
+            vectorVec.push_back(temp);
+            temp.clear();
+            cout << "New vector contains: " << endl;
+            cout << *itr << endl;
+            temp.push_back(*itr);
+            numVectors++;
+        }
+        else{
+            temp.push_back(*itr);
+            cout << *itr << endl;
+        }
+
+        itr++;
+
+    }
+
+
+    //CATCHES ALL STRINGS AFTER LAST |, <, OR > CHAR
+    if(!temp.empty())
+        vectorVec.push_back(temp);
+
+
 
     command = *(currentLineVec.begin());
 
@@ -277,12 +311,12 @@ void parseCommand(string currentLineUnparsed){
 
     itr = currentLineVec.begin();
 
-    cout << endl;
-    while(itr != currentLineVec.end()){
-        // if(!((itr->c_str).indexOf('|')))
-        cout << *itr << endl;
-        itr++;
-    }
+    // cout << endl;
+    // while(itr != currentLineVec.end()){
+    //     // if(!((itr->c_str).indexOf('|')))
+    //     cout << *itr << endl;
+    //     itr++;
+    // }
 
     //call function to run command here
 
