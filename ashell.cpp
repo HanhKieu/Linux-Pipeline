@@ -252,6 +252,26 @@ vector < vector<string> > splitCommandByRedirect(vector <string> currentLineVec)
     return vectorVec;
 }
 
+void pipeItUp(int fdIndex, int readWriteIndex, int arr[][2], int numberOfPipes){
+    //char buf[100];
+    //cout << " you finna pipe it up pi" << endl;
+    //IF YOU TRYNA WRITE
+    if(readWriteIndex == 1){
+        cout << "read write index " << readWriteIndex << endl;
+        dup2(arr[fdIndex][readWriteIndex], 1);
+    }
+    else if(readWriteIndex == 0){
+        //read(arr[fdIndex][readWriteIndex], buf, 100);
+        if(fdIndex < numberOfPipes)
+            dup2(arr[fdIndex + 1][readWriteIndex], 1);
+    }
+
+
+    cout << "buf is " << buf << endl;
+    cout << "end " << endl;
+ 
+}
+
 void myFork(vector < vector<string> > vectorOfCommands){ 
 
     pid_t myPID;
@@ -267,7 +287,7 @@ void myFork(vector < vector<string> > vectorOfCommands){
     string path;
 
     //1 MEANS WRITE, 0 MEANS READ
-    int readOrWriteIndex = 1;
+    int readWriteIndex = 1;
 
 
     //CREATE PIPES
@@ -297,7 +317,12 @@ void myFork(vector < vector<string> > vectorOfCommands){
                 
             }
 
-            //PIPE HERE
+            //PIPE IT UP HERE IF YOU GOTS MORE DAN 1 CHILLREN
+            if(numberOfChildren > 1){
+                pipeItUp(fdIndex, readWriteIndex, arr, numberOfPipes);
+                
+            }     
+
             command = *(finalCommandLine.begin());
             if(command == "ls"){
                 myLs(finalCommandLine, foundRedirect);
@@ -554,7 +579,7 @@ void parseCommand(string currentLineUnparsed){
             temp.clear();
             // cout << "New vector contains: " << endl;
             // cout << *itr << endl;
-            temp.push_back(*itr);
+//            temp.push_back(*itr);
             numVectors++;
         }
         else{
