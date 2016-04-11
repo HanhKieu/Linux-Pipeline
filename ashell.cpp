@@ -184,20 +184,16 @@ void myLs(vector<string> currentLineVec, bool foundRedirect){
 
     while(currentFile != NULL){
         
-        if(!foundRedirect || counter > 0){
-            write(STDOUT_FILENO, "\n", 1);
-        }
+        
         string tempString(currentFile->d_name);
         lsStringGenerator( argument + "/" + tempString);
         write(STDOUT_FILENO, tempString.c_str(), tempString.size());
         currentFile = readdir(myDir);
         counter++;
-
+        if(currentFile != NULL)
+            write(STDOUT_FILENO, "\n", 1);
     }
-
-    if(foundRedirect){
-        write(STDOUT_FILENO, "\n", 1);
-    }
+    write(STDOUT_FILENO, "\n", 1);
 
 }
 
@@ -370,11 +366,14 @@ void myFork(vector < vector<string> > vectorOfCommands){
 
             closeAllPipes(arr, numberOfPipes);
             command = *(finalCommandLine.begin());
+            
             if(command == "ls"){
+                write(STDOUT_FILENO, "\n", 1); 
                 myLs(finalCommandLine, foundRedirect);
             }
             else if(command == "pwd"){
-                printWorkingDirectory(foundRedirect);    
+                printWorkingDirectory(foundRedirect);
+                write(STDOUT_FILENO, "\n", 1);    
             }
             else if(command == "ff"){
                 if(finalCommandLine.size() == 1){
@@ -390,11 +389,13 @@ void myFork(vector < vector<string> > vectorOfCommands){
                         path = ".";
                     }
                     findFile(path, finalCommandLine.at(1));
+
                 }
+write(STDOUT_FILENO, "\n", 1); 
             }
             //EXEC
             else{
-
+                write(STDOUT_FILENO, "\n", 1); 
                 int count = 0;
                 vector<string>::iterator itr;
 
@@ -412,6 +413,8 @@ void myFork(vector < vector<string> > vectorOfCommands){
                 currentLine[count] = NULL;
                 execvp(currentLine[0], currentLine);
             }
+
+
             exit(0);
         }
         // //ELSE IF YOU ARE THE PARENT
@@ -716,7 +719,7 @@ int main(int argc, char *argv[]){
                 it2 = myVector.begin();
                 numPrevCommands++;
 
-                write(STDOUT_FILENO, "\n", 1);
+                //write(STDOUT_FILENO, "\n", 1);
                 printCurrentDir();
 
 
