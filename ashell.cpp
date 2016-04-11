@@ -1,11 +1,9 @@
 #include <unistd.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
 #include <ctype.h>
 #include <string>
 #include <cstring>
-#include <iostream>
 #include <vector>
 #include <sys/wait.h>
 #include <sstream>
@@ -15,44 +13,9 @@
 
 using namespace std;
 
-//http://codewiki.wikidot.com/c:system-calls:dup2
-//http://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
 
-void printOutVectorOfVectors(vector< vector<string> > vectorOfCommands){
-    vector<string>::iterator column;
-    vector< vector<string> >::iterator row;
-    cout << endl;
-    for(row = vectorOfCommands.begin(); row != vectorOfCommands.end(); row++){
-        cout << "start-------------" << endl;
 
-        for( column = row->begin(); column != row->end(); column++){
 
-            cout << *column << endl;
-        }
-        cout << "end------------" << endl;
-        cout << endl;
-    }
-}
-
-void printOutSingleVector(vector<string> myVector){
-    vector<string>::iterator row;
-    for( row = myVector.begin(); row != myVector.end(); row++){
-
-            cout << *row << endl;
-        }
-
-}
-
-void printOutSingleVectorCerr(vector<string> myVector){
-    cerr << "START--------" << endl;
-    vector<string>::iterator row;
-    for( row = myVector.begin(); row != myVector.end(); row++){
-
-            cerr << *row << endl;
-        }
-    cerr << "END-----------" << endl;
-
-}
 
 void ResetCanonicalMode(int fd, struct termios *savedattributes){
     tcsetattr(fd, TCSANOW, savedattributes);
@@ -64,7 +27,7 @@ void SetNonCanonicalMode(int fd, struct termios *savedattributes){
     
     // Make sure stdin is a terminal. 
     if(!isatty(fd)){
-        fprintf (stderr, "Not a terminal.\n");
+        //fprintf (stderr, "Not a terminal.\n");
         exit(0);
     }
     
@@ -108,7 +71,7 @@ void findFile(string givenPath, string stringToFind){
     closedir(myDir);
 
 }
-void printWorkingDirectory(bool foundRedirect){
+void printWorkingDirectory(bool foundRedirect){//http://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
     char buffer[1024];
     char *currentDir = getcwd(buffer, sizeof(buffer));
     string tempString(currentDir);
@@ -197,7 +160,7 @@ void myLs(vector<string> currentLineVec, bool foundRedirect){
 
 }
 
-void myRedirect(vector<string> myVector){
+void myRedirect(vector<string> myVector){ //http://codewiki.wikidot.com/c:system-calls:dup2
     //OPENS FILE WITH WRITE ONLY FLAG http://pubs.opengroup.org/onlinepubs/009695399/functions/open.html
     string filename( *(myVector.end() - 1) );
     string typeOfRedirect( *(myVector.end() - 2) );
