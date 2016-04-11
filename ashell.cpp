@@ -167,8 +167,6 @@ void lsStringGenerator(string path){
 }
 
 void myLs(vector<string> currentLineVec, bool foundRedirect){
-
-    printOutSingleVectorCerr(currentLineVec);
     DIR *myDir; 
     struct dirent *currentFile;
     string tempString;
@@ -198,11 +196,9 @@ void myLs(vector<string> currentLineVec, bool foundRedirect){
 
     }
 
-    
     if(foundRedirect){
         write(STDOUT_FILENO, "\n", 1);
     }
-    //cout << "ending " << endl;
 
 }
 
@@ -244,20 +240,16 @@ vector < vector<string> > splitCommandByRedirect(vector <string> currentLineVec)
     vector < vector<string> > vectorVec;
     vector<string> temp;
     int numVectors = 1;
-    //  cout << "New vector contains: " << endl;
-    // cout << *itr << endl;
+
     while(itr != currentLineVec.end()){
         if( *itr == "<" || *itr == ">"){
             vectorVec.push_back(temp);
             temp.clear();
-            // cout << "New vector contains: " << endl;
-            // cout << *itr << endl;
             temp.push_back(*itr);
             numVectors++;
         }
         else{
             temp.push_back(*itr);
-             // cout << *itr << endl;
         }
 
         itr++;
@@ -286,44 +278,33 @@ void closeAllPipes(int arr[][2], int numberOfPipes){
 }
 void pipeItUp(int fdIndex, int readWriteIndex, int arr[][2], int numberOfPipes){
     //First + Middle cases
-    cout << "fd index os " << fdIndex << endl;
 
     //IF NUMBER OF PIPES IS 1
     if(fdIndex == 0 && fdIndex == (numberOfPipes - 1)){
         dup2(arr[fdIndex][1], STDOUT_FILENO);    
-        closingBothEndsOfPipe(arr[fdIndex]);
+        //closingBothEndsOfPipe(arr[fdIndex]);
     }
     //IF ITS THE FIRST ONE
     else if(fdIndex == 0){
         dup2(arr[fdIndex][1], STDOUT_FILENO);
-        closingBothEndsOfPipe(arr[fdIndex]);
+        //closingBothEndsOfPipe(arr[fdIndex]);
 
     }
     //IF ITS THE LAST ONE
-    else if(fdIndex == (numberOfPipes - 1 )){
-        dup2(arr[fdIndex - 1][0], STDIN_FILENO);
-        closingBothEndsOfPipe(arr[fdIndex - 1]);   
-    }
+    // else if(fdIndex == (numberOfPipes - 1 )){
+    //     dup2(arr[fdIndex - 1][0], STDIN_FILENO);
+    //     closingBothEndsOfPipe(arr[fdIndex - 1]);   
+    // }
     //ANYTHING IN THE MIDDLE
     else{
         dup2(arr[fdIndex][1], STDOUT_FILENO);
-        closingBothEndsOfPipe(arr[fdIndex]);
+       // closingBothEndsOfPipe(arr[fdIndex]);
         dup2(arr[fdIndex - 1][0], STDIN_FILENO);
-        closingBothEndsOfPipe(arr[fdIndex - 1]);  
+        //closingBothEndsOfPipe(arr[fdIndex - 1]);  
 
     }
-    // if(fdIndex != (numberOfPipes - 1) ){
-    //     dup2(arr[fdIndex][1], STDOUT_FILENO);
-    //     closingBothEndsOfPipe(arr[fdIndex]);
-    // }
-    // //middle + last 
-    // if(fdIndex > 0){
-    //     dup2(arr[fdIndex - 1][0], STDIN_FILENO);
-    //     closingBothEndsOfPipe(arr[fdIndex - 1]);
-    // }
 
 
- 
 }
 
 void myFork(vector < vector<string> > vectorOfCommands){ 
@@ -376,21 +357,16 @@ void myFork(vector < vector<string> > vectorOfCommands){
 
             //PIPE IT UP HERE IF YOU GOTS MORE DAN 1 CHILLREN
             if(numberOfChildren > 1 && (fdIndex < numberOfPipes)) {
-                cout << "pussy 1" << endl;
                 pipeItUp(fdIndex, readWriteIndex, arr, numberOfPipes);
                 
             }
+            //ELSE IF YOU ARE THE LAST ONE
             else if(fdIndex == (numberOfPipes) ){
-                cout << "hello1" << endl;
-                cout << fdIndex << endl;
                 dup2(arr[fdIndex - 1][0], STDIN_FILENO);
                 closingBothEndsOfPipe(arr[fdIndex - 1]);   
-                cout << "hello2" << endl;
             }    
 
-
-
-
+            closeAllPipes(arr, numberOfPipes);
             command = *(finalCommandLine.begin());
             if(command == "ls"){
                 myLs(finalCommandLine, foundRedirect);
@@ -433,10 +409,7 @@ void myFork(vector < vector<string> > vectorOfCommands){
 
                 currentLine[count] = NULL;
                 execvp(currentLine[0], currentLine);
-
             }
-
-
             exit(0);
         }
         // //ELSE IF YOU ARE THE PARENT
@@ -450,144 +423,13 @@ void myFork(vector < vector<string> > vectorOfCommands){
 
     }
 }
-    //for(int i = vectorOfCommands.size() - 1;)
-    // int status;
-    // vector<string>::iterator it = currentLineVec.begin();
-    // string path;
-    // pid_t my_pid = fork();
-    // string command = *(currentLineVec.begin());
-
-    // if(my_pid == 0){
-    //     if(command == "ls"){
-    //         if(currentLineVec.size() > 1){
-    //             if(currentLineVec.at(1) == ">") {
-    //                 myRedirect(currentLineVec);
-    //             }}
-    //             else{
-    //                 myLs(currentLineVec);
-    //             }
-    //     }
-
-    //     else if(command == "pwd"){
-    //         printWorkingDirectory();
-    //     }
-    //     else if(command == "ff"){
-    //         if(currentLineVec.size() == 1){
-    //             string tempString("ff command requires a filename!");
-    //             write(STDOUT_FILENO, "\n", 1);
-    //             write(STDOUT_FILENO, tempString.c_str(), tempString.size());
-    //         }
-    //         else{
-    //             if(currentLineVec.size() >= 3){
-    //                 path = currentLineVec.at(2);
-    //             }
-    //             else{
-    //                 path = ".";
-    //             }
-    //             findFile(path, currentLineVec.at(1));
-    //         }
-    //     }
-    //     else{
-    //         int count = 0;
-    //         vector<string>::iterator itr;
-
-    //         itr = currentLineVec.begin();
-    //         while(itr != currentLineVec.end()){
-    //             count++;
-    //             itr++;
-    //         } //COUNTS NUMBER OF COMMANDS TO INIT THE CHAR** WITH 
-
-    //         char* currentLine[count+1];
-    //         for(int i = 0; i < count; i++){
-    //             currentLine[i] = const_cast<char*>(currentLineVec.at(i).c_str());
-    //         }
-
-    //         currentLine[count] = NULL;
-
-    //         execvp(currentLine[0], currentLine);
-    //     }
-    //     cout << "made it to exit" << endl;
-    //     exit(0);
-    // }
-    // else{
-    //     //wait for child to execute waitpid()
-    //     waitpid(my_pid, &status, 0);
-    //     //cout << "okay this ended" << endl;
-    // }
-
-// void myFork(vector<string> currentLineVec){ 
-//     int status;
-//     vector<string>::iterator it = currentLineVec.begin();
-//     string path;
-//     pid_t my_pid = fork();
-//     string command = *(currentLineVec.begin());
-
-//     if(my_pid == 0){
-//         if(command == "ls"){
-//             if(currentLineVec.size() > 1){
-//                 if(currentLineVec.at(1) == ">") {
-//                     myRedirect(currentLineVec);
-//                 }}
-//                 else{
-//                     myLs(currentLineVec);
-//                 }
-//         }
-
-//         else if(command == "pwd"){
-//             printWorkingDirectory();
-//         }
-//         else if(command == "ff"){
-//             if(currentLineVec.size() == 1){
-//                 string tempString("ff command requires a filename!");
-//                 write(STDOUT_FILENO, "\n", 1);
-//                 write(STDOUT_FILENO, tempString.c_str(), tempString.size());
-//             }
-//             else{
-//                 if(currentLineVec.size() >= 3){
-//                     path = currentLineVec.at(2);
-//                 }
-//                 else{
-//                     path = ".";
-//                 }
-//                 findFile(path, currentLineVec.at(1));
-//             }
-//         }
-//         else{
-//             int count = 0;
-//             vector<string>::iterator itr;
-
-//             itr = currentLineVec.begin();
-//             while(itr != currentLineVec.end()){
-//                 count++;
-//                 itr++;
-//             } //COUNTS NUMBER OF COMMANDS TO INIT THE CHAR** WITH 
-
-//             char* currentLine[count+1];
-//             for(int i = 0; i < count; i++){
-//                 currentLine[i] = const_cast<char*>(currentLineVec.at(i).c_str());
-//             }
-
-//             currentLine[count] = NULL;
-
-//             execvp(currentLine[0], currentLine);
-//         }
-//         cout << "made it to exit" << endl;
-//         exit(0);
-//     }
-//     else{
-//         //wait for child to execute waitpid()
-//         waitpid(my_pid, &status, 0);
-//         //cout << "okay this ended" << endl;
-//     }
-// }
-
-// ;
 
 void myCd(vector<string> currentLineVec){
     string errorMessage = "Error changing directory.";
     if(currentLineVec.size() > 1){
         //cd to first argument
         if((chdir(currentLineVec.at(1).c_str()))){
+
             //unsuccesful cd
             write(STDOUT_FILENO, "\n", 1);
             write(STDOUT_FILENO, errorMessage.c_str(), errorMessage.size());
@@ -595,7 +437,6 @@ void myCd(vector<string> currentLineVec){
             
     }
     else{
-        //cd to home
         chdir(getenv("HOME"));
     }
         
@@ -610,23 +451,16 @@ void parseCommand(string currentLineUnparsed){
     vector<vector<string> > vectorVec;
     vector<vector<string> > vectorVecItr;
 
-     // cout << endl;
 
 
     //LOOP HERE TO ADD SPACES IN STRING SO STRINGSTREAM WORKS
     for(unsigned int i = 0; i < currentLineUnparsed.size(); i++){
         if(currentLineUnparsed.at(i) == '|' || currentLineUnparsed.at(i) == '>' || currentLineUnparsed.at(i) == '<'){
-//            cout << "Well I'm in here now...." << endl;
             currentLineUnparsed.insert(i++, 1, ' ');
-//            numSpacesAdded++;
             currentLineUnparsed.insert(i+1, 1, ' ');
         }
 
     }
-
-    // for(int i = 0; i < currentLineUnparsed.size(); i++){
-    //     cout << currentLineUnparsed.at(i) << endl;
-    // }
 
     stringstream ss(currentLineUnparsed); //parses based on space
 
@@ -756,8 +590,7 @@ int main(int argc, char *argv[]){
 
     printCurrentDir();
     
-    while(1){
-        //myLS();
+    while(1){;
         read(STDIN_FILENO, &RXChar, 1);
 
         //IF IT IS A PRINTABLE CHARACTER
@@ -802,7 +635,6 @@ int main(int argc, char *argv[]){
                         else{
 
                             //IF YOU'RE NOT AT THE END OF THE VECTOR
-                            //cout << "up: " << upArrowOnce << endl;
                             if(it2 == myVector.begin() && firstTimeVisitingBegin){
                                 firstTimeVisitingBegin = false;
                                 clearSTDOUT(currentLineSize, currentLine);
@@ -813,18 +645,14 @@ int main(int argc, char *argv[]){
                             else if( (it2 != myVector.end() - 1) ){
 
                                 ++it2;
-                                //cout << " our it2S tring is :" << it2->c_str() << endl;
+
                                 if(it2 == myVector.end() - 1){
-                                    //cout << "yeet" << endl;
                                     upArrowOnce = true;
                                 }
+
                                 clearSTDOUT(currentLineSize, currentLine);
-                                //cout << "current line size is: " << currentLineSize << endl;
-                               // cout << "CURRENT LINE IS: " << currentLine << endl;
 
-                                
                                 write(STDOUT_FILENO, it2->c_str(), it2->size());
-
 
                                 currentLineSize = it2->size();
                                 strcpy(currentLine, it2->c_str());
@@ -833,7 +661,6 @@ int main(int argc, char *argv[]){
                             //ELSE IF YOU'VE DISPLAYED THE END ALREADY, THEN BEEP
                             else if(upArrowOnce == true){
                                 write(STDOUT_FILENO, soundString.c_str(),1);
-                                //cout << " ayy lmao" << endl;
                             }
                         }
                     }
@@ -851,7 +678,7 @@ int main(int argc, char *argv[]){
                             if(it2 != myVector.begin()){
                                 it2--;
                                 write(STDOUT_FILENO, it2->c_str(), it2->size());
-                                //cout << "yee " << endl;
+
                                 currentLineSize = it2->size();
                                 strcpy(currentLine, it2->c_str());
                                 
@@ -866,11 +693,9 @@ int main(int argc, char *argv[]){
                                 firstTimeVisitingBegin = true;                            
                             }//else if at beginnign write onto screen
 
-                        //printf("It was a down arrow\n");
                         }
                     }
                     //OTHERWISE ITS SOMETHING ELSE
-
                 }
             }
 
