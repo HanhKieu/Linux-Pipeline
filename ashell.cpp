@@ -368,7 +368,8 @@ void myFork(vector < vector<string> > vectorOfCommands){
             command = *(finalCommandLine.begin());
             
             if(command == "ls"){
-                write(STDOUT_FILENO, "\n", 1); 
+                if(numberOfPipes == 0)
+                    write(STDOUT_FILENO, "\n", 1); 
                 myLs(finalCommandLine, foundRedirect);
             }
             else if(command == "pwd"){
