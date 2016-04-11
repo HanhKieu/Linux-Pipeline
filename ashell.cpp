@@ -16,7 +16,7 @@
 using namespace std;
 
 //http://codewiki.wikidot.com/c:system-calls:dup2
-
+//http://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
 
 void printOutVectorOfVectors(vector< vector<string> > vectorOfCommands){
     vector<string>::iterator column;
@@ -86,15 +86,13 @@ void findFile(string givenPath, string stringToFind){
     string tempString;
     string path;
     myDir = opendir(givenPath.c_str());
-    int succ = 1;
 
     currentFile = readdir(myDir);
     while(currentFile != NULL){
         //write(STDOUT_FILENO, "\n", 1);
         string tempString(currentFile->d_name);
-        //cout << tempString << endl;
         string filePath(givenPath + "/" + tempString);
-        succ = stat(filePath.c_str(), &statBuf);
+        stat(filePath.c_str(), &statBuf);
 
         //IF ITS A DIRECTORY
         if((statBuf.st_mode & S_IFDIR) && (statBuf.st_mode & S_IRUSR) && (tempString != ".") && (tempString != "..")  ){
@@ -277,13 +275,9 @@ void closingBothEndsOfPipe(int arr[2]){
 }
 
 void closeAllPipes(int arr[][2], int numberOfPipes){
-    int succ;
-    //cerr << "begin" << endl;
     for(int i = 0; i < numberOfPipes;i++){
         for(int j = 0; j < 2; j++){
-            succ = close(arr[i][j]);
-            if(succ < 0)
-                cerr << "dun messed up " << arr[i][j] << endl;
+            close(arr[i][j]);
         }
     }
 }
@@ -487,20 +481,15 @@ void parseCommand(string currentLineUnparsed){
 
     vector<string> temp;
     int numVectors = 1;
-    //  cout << "New vector contains: " << endl;
-    // cout << *itr << endl;
+
     while(itr != currentLineVec.end()){
-        if( *itr == "|" ){//|| *itr == "<" || *itr == ">"){
+        if( *itr == "|" ){
             vectorVec.push_back(temp);
             temp.clear();
-            // cout << "New vector contains: " << endl;
-            // cout << *itr << endl;
-//            temp.push_back(*itr);
             numVectors++;
         }
         else{
             temp.push_back(*itr);
-             // cout << *itr << endl;
         }
 
         itr++;
@@ -528,14 +517,6 @@ void parseCommand(string currentLineUnparsed){
     }
 
     itr = currentLineVec.begin();
-
-    // cout << endl;
-    // while(itr != currentLineVec.end()){
-    //     // if(!((itr->c_str).indexOf('|')))
-    //     cout << *itr << endl;
-    //     itr++;
-    // }
-
     //call function to run command here
 
 }
@@ -550,7 +531,7 @@ void clearSTDOUT(int &sizeOfString, char *currentLine ){
     sizeOfString = 0;
 }
 
-void printCurrentDir(){ //http://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
+void printCurrentDir(){ 
     char buffer[1024];
     char *currentDir = getcwd(buffer, sizeof(buffer));
     
@@ -715,9 +696,7 @@ int main(int argc, char *argv[]){
                 historyCounter++;
 
 
-                //cout << "current line size is " << currentLineSize << endl;
                 //IF WE HAVE MORE THAN 10 IN OUR HISTORY
-                //cout << "history counter is " << historyCounter << endl;
                 if(historyCounter > 10){
                     myVector.pop_back();
                     historyCounter--;
