@@ -1,0 +1,21 @@
+Hanh Kieu, 998358482
+Michael Casias, 912408211
+
+Everything seems to work. There is an issue with needing a newline character after a redirect(nothing that affects the functionality of the code).
+
+For example, an example:
+/../p1% ls > out.txt /.../p1%
+
+Instead of  
+
+/../p1% ls > out.txt 
+/.../p1%
+
+ Other than that, everything outputs cleanly, and redirects put everything in the file without a problem. 
+
+
+Referenced examples from these sources:
+
+http://stackoverflow.com/questions/298510/how-to-get-the-current-directory-in-a-c-program
+http://codewiki.wikidot.com/c:system-calls:dup2
+http://pubs.opengroup.org/onlinepubs/009695399/functions/open.html
