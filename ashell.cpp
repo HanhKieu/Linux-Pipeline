@@ -208,11 +208,23 @@ void myRedirect(vector<string> myVector){
     string typeOfRedirect( *(myVector.end() - 2) );
     mode_t mode = S_IRUSR | S_IWUSR | S_IXUSR;
 
-    int fileToOpen = open(filename.c_str(), O_WRONLY | O_CREAT, mode);
-    if(fileToOpen < 0){
-        cout << "ya don fucked up " << endl;
+    if(typeOfRedirect == ">"){
+        int fileToOpen = open(filename.c_str(), O_WRONLY | O_CREAT, mode);
+        if(fileToOpen < 0){
+            cout << "ya don fucked up " << endl;
+        }
+        dup2(fileToOpen, STDOUT_FILENO);
+
     }
-    dup2(fileToOpen, STDOUT_FILENO);
+    else if(typeOfRedirect == "<"){
+        int fileToOpen = open(filename.c_str(), O_RDONLY);
+        if(fileToOpen < 0){
+            cout << "ya don fucked up " << endl;
+        }
+        dup2(fileToOpen, STDIN_FILENO);
+
+    }
+    
 
 }
 
@@ -422,7 +434,7 @@ void myFork(vector < vector<string> > vectorOfCommands){
 
     }
     closeAllPipes(arr, numberOfPipes);
-    wait(&waitVar);
+    waitpid(myPID, &waitVar, 0);
 }
 
 void myCd(vector<string> currentLineVec){
