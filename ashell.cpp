@@ -43,6 +43,17 @@ void printOutSingleVector(vector<string> myVector){
 
 }
 
+void printOutSingleVectorCerr(vector<string> myVector){
+    cerr << "START--------" << endl;
+    vector<string>::iterator row;
+    for( row = myVector.begin(); row != myVector.end(); row++){
+
+            cerr << *row << endl;
+        }
+    cerr << "END-----------" << endl;
+
+}
+
 void ResetCanonicalMode(int fd, struct termios *savedattributes){
     tcsetattr(fd, TCSANOW, savedattributes);
 }
@@ -156,11 +167,14 @@ void lsStringGenerator(string path){
 }
 
 void myLs(vector<string> currentLineVec, bool foundRedirect){
+
+    printOutSingleVectorCerr(currentLineVec);
     DIR *myDir; 
     struct dirent *currentFile;
     string tempString;
     string argument;
     int counter = 0;
+
     if(currentLineVec.size() > 1){
         myDir = opendir(currentLineVec.at(1).c_str());
         argument = currentLineVec.at(1);
@@ -169,6 +183,7 @@ void myLs(vector<string> currentLineVec, bool foundRedirect){
         myDir = opendir(".");
         argument = ".";
     }
+
     currentFile = readdir(myDir);
 
     while(currentFile != NULL){
@@ -180,12 +195,15 @@ void myLs(vector<string> currentLineVec, bool foundRedirect){
         write(STDOUT_FILENO, tempString.c_str(), tempString.size());
         currentFile = readdir(myDir);
         counter++;
+
     }
 
+    
     if(foundRedirect){
         write(STDOUT_FILENO, "\n", 1);
     }
     //cout << "ending " << endl;
+
 }
 
 void myRedirect(vector<string> myVector){
@@ -267,39 +285,44 @@ void closeAllPipes(int arr[][2], int numberOfPipes){
     }
 }
 void pipeItUp(int fdIndex, int readWriteIndex, int arr[][2], int numberOfPipes){
-    //char buf[100];
-    //cout << " you finna pipe it up pi" << endl;
-    //IF YOU TRYNA WRITE
-
-    //cout << readWriteIndex << endl;
-
     //First + Middle cases
-    if(fdIndex != (numberOfPipes - 1) ){
-        dup2(arr[fdIndex][1], STDOUT_FILENO);
+    cout << "fd index os " << fdIndex << endl;
+
+    //IF NUMBER OF PIPES IS 1
+    if(fdIndex == 0 && fdIndex == (numberOfPipes - 1)){
+        dup2(arr[fdIndex][1], STDOUT_FILENO);    
         closingBothEndsOfPipe(arr[fdIndex]);
     }
-    //middle + last 
-    if(fdIndex > 0){
-        dup2(arr[fdIndex - 1][0], STDIN_FILENO);
-        closingBothEndsOfPipe(arr[fdIndex - 1]);
+    //IF ITS THE FIRST ONE
+    else if(fdIndex == 0){
+        dup2(arr[fdIndex][1], STDOUT_FILENO);
+        closingBothEndsOfPipe(arr[fdIndex]);
+
     }
+    //IF ITS THE LAST ONE
+    else if(fdIndex == (numberOfPipes - 1 )){
+        dup2(arr[fdIndex - 1][0], STDIN_FILENO);
+        closingBothEndsOfPipe(arr[fdIndex - 1]);   
+    }
+    //ANYTHING IN THE MIDDLE
+    else{
+        dup2(arr[fdIndex][1], STDOUT_FILENO);
+        closingBothEndsOfPipe(arr[fdIndex]);
+        dup2(arr[fdIndex - 1][0], STDIN_FILENO);
+        closingBothEndsOfPipe(arr[fdIndex - 1]);  
 
-    
-    // cout << "oh yeah " << endl;
-    // if(readWriteIndex == 1){
-    //     dup2(arr[fdIndex][readWriteIndex], );
+    }
+    // if(fdIndex != (numberOfPipes - 1) ){
+    //     dup2(arr[fdIndex][1], STDOUT_FILENO);
+    //     closingBothEndsOfPipe(arr[fdIndex]);
     // }
-    // else if(readWriteIndex == 0){
-    //     dup2(arr[fdIndex - 1][readWriteIndex], STDIN_FILENO);
-    //     //dup2(arr[fdIndex - 1][readWriteIndex] )
-    //     // dup2(arr[fdIndex - 1][0], 1);
-    //     // if(fdIndex < numberOfPipes)
-    //     //     dup2(arr[fdIndex][readWriteIndex], 1);
+    // //middle + last 
+    // if(fdIndex > 0){
+    //     dup2(arr[fdIndex - 1][0], STDIN_FILENO);
+    //     closingBothEndsOfPipe(arr[fdIndex - 1]);
     // }
 
 
-    // cout << "buf is " <<  endl;
-    // cout << "end " << endl;
  
 }
 
@@ -330,6 +353,7 @@ void myFork(vector < vector<string> > vectorOfCommands){
     //ITERATE THROUGH EACH CHILD
     for(int i = 0; i < numberOfChildren; i++){
         foundRedirect = false;
+
         myPID = fork();
         
 
@@ -351,10 +375,21 @@ void myFork(vector < vector<string> > vectorOfCommands){
             }
 
             //PIPE IT UP HERE IF YOU GOTS MORE DAN 1 CHILLREN
-            if(numberOfChildren > 1){
+            if(numberOfChildren > 1 && (fdIndex < numberOfPipes)) {
+                cout << "pussy 1" << endl;
                 pipeItUp(fdIndex, readWriteIndex, arr, numberOfPipes);
                 
-            }     
+            }
+            else if(fdIndex == (numberOfPipes) ){
+                cout << "hello1" << endl;
+                cout << fdIndex << endl;
+                dup2(arr[fdIndex - 1][0], STDIN_FILENO);
+                closingBothEndsOfPipe(arr[fdIndex - 1]);   
+                cout << "hello2" << endl;
+            }    
+
+
+
 
             command = *(finalCommandLine.begin());
             if(command == "ls"){
@@ -381,6 +416,7 @@ void myFork(vector < vector<string> > vectorOfCommands){
             }
             //EXEC
             else{
+
                 int count = 0;
                 vector<string>::iterator itr;
 
@@ -396,8 +432,8 @@ void myFork(vector < vector<string> > vectorOfCommands){
                 }
 
                 currentLine[count] = NULL;
-
                 execvp(currentLine[0], currentLine);
+
             }
 
 
@@ -407,8 +443,9 @@ void myFork(vector < vector<string> > vectorOfCommands){
         else{
             closeAllPipes(arr, numberOfPipes);
             wait(&waitVar);
-            readWriteIndex = swapReadWriteIndex(readWriteIndex);
             fdIndex++;
+            readWriteIndex = swapReadWriteIndex(readWriteIndex);
+            
         }
 
     }
