@@ -252,23 +252,54 @@ vector < vector<string> > splitCommandByRedirect(vector <string> currentLineVec)
     return vectorVec;
 }
 
+void closingBothEndsOfPipe(int arr[2]){
+    for(int i = 0; i < 2; i++){
+        close(arr[i]);
+    }
+
+}
+
+void closeAllPipes(int arr[][2], int numberOfPipes){
+    for(int i = 0; i < numberOfPipes;i++){
+        for(int j = 0; j < 2; j++){
+            close(arr[i][j]);
+        }
+    }
+}
 void pipeItUp(int fdIndex, int readWriteIndex, int arr[][2], int numberOfPipes){
     //char buf[100];
     //cout << " you finna pipe it up pi" << endl;
     //IF YOU TRYNA WRITE
-    if(readWriteIndex == 1){
-        cout << "read write index " << readWriteIndex << endl;
-        dup2(arr[fdIndex][readWriteIndex], 1);
+
+    //cout << readWriteIndex << endl;
+
+    //First + Middle cases
+    if(fdIndex != (numberOfPipes - 1) ){
+        dup2(arr[fdIndex][1], STDOUT_FILENO);
+        closingBothEndsOfPipe(arr[fdIndex]);
     }
-    else if(readWriteIndex == 0){
-        //read(arr[fdIndex][readWriteIndex], buf, 100);
-        if(fdIndex < numberOfPipes)
-            dup2(arr[fdIndex + 1][readWriteIndex], 1);
+    //middle + last 
+    if(fdIndex > 0){
+        dup2(arr[fdIndex - 1][0], STDIN_FILENO);
+        closingBothEndsOfPipe(arr[fdIndex - 1]);
     }
 
+    
+    // cout << "oh yeah " << endl;
+    // if(readWriteIndex == 1){
+    //     dup2(arr[fdIndex][readWriteIndex], );
+    // }
+    // else if(readWriteIndex == 0){
+    //     dup2(arr[fdIndex - 1][readWriteIndex], STDIN_FILENO);
+    //     //dup2(arr[fdIndex - 1][readWriteIndex] )
+    //     // dup2(arr[fdIndex - 1][0], 1);
+    //     // if(fdIndex < numberOfPipes)
+    //     //     dup2(arr[fdIndex][readWriteIndex], 1);
+    // }
 
-    cout << "buf is " << buf << endl;
-    cout << "end " << endl;
+
+    // cout << "buf is " <<  endl;
+    // cout << "end " << endl;
  
 }
 
@@ -300,7 +331,7 @@ void myFork(vector < vector<string> > vectorOfCommands){
     for(int i = 0; i < numberOfChildren; i++){
         foundRedirect = false;
         myPID = fork();
-        fdIndex++;
+        
 
         currentCommand = vectorOfCommands[i];
 
@@ -308,6 +339,8 @@ void myFork(vector < vector<string> > vectorOfCommands){
         if(myPID == 0){
             vector < vector<string> > redirectCommandParsed;
             finalCommandLine = currentCommand;
+            
+            //  CHECKING FOR REDIRECTION
             if(checkForRedirect(currentCommand)){
                 redirectCommandParsed = splitCommandByRedirect(currentCommand);
                 //printOutVectorOfVectors(redirectCommandParsed);
@@ -367,11 +400,15 @@ void myFork(vector < vector<string> > vectorOfCommands){
                 execvp(currentLine[0], currentLine);
             }
 
+
             exit(0);
         }
         // //ELSE IF YOU ARE THE PARENT
         else{
+            closeAllPipes(arr, numberOfPipes);
             wait(&waitVar);
+            readWriteIndex = swapReadWriteIndex(readWriteIndex);
+            fdIndex++;
         }
 
     }
