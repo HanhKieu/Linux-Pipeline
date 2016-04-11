@@ -172,7 +172,6 @@ void myLs(vector<string> currentLineVec, bool foundRedirect){
     string tempString;
     string argument;
     int counter = 0;
-
     if(currentLineVec.size() > 1){
         myDir = opendir(currentLineVec.at(1).c_str());
         argument = currentLineVec.at(1);
@@ -185,6 +184,7 @@ void myLs(vector<string> currentLineVec, bool foundRedirect){
     currentFile = readdir(myDir);
 
     while(currentFile != NULL){
+        
         if(!foundRedirect || counter > 0){
             write(STDOUT_FILENO, "\n", 1);
         }
@@ -270,38 +270,30 @@ void closingBothEndsOfPipe(int arr[2]){
 }
 
 void closeAllPipes(int arr[][2], int numberOfPipes){
+    int succ;
+    //cerr << "begin" << endl;
     for(int i = 0; i < numberOfPipes;i++){
         for(int j = 0; j < 2; j++){
-            close(arr[i][j]);
+            succ = close(arr[i][j]);
+            if(succ < 0)
+                cerr << "dun messed up " << arr[i][j] << endl;
         }
     }
 }
 void pipeItUp(int fdIndex, int readWriteIndex, int arr[][2], int numberOfPipes){
     //First + Middle cases
 
-    //IF NUMBER OF PIPES IS 1
-    if(fdIndex == 0 && fdIndex == (numberOfPipes - 1)){
+    //IF FIRST ONE 
+    if(fdIndex == 0) {
         dup2(arr[fdIndex][1], STDOUT_FILENO);    
         //closingBothEndsOfPipe(arr[fdIndex]);
     }
-    //IF ITS THE FIRST ONE
-    else if(fdIndex == 0){
-        dup2(arr[fdIndex][1], STDOUT_FILENO);
-        //closingBothEndsOfPipe(arr[fdIndex]);
-
-    }
-    //IF ITS THE LAST ONE
-    // else if(fdIndex == (numberOfPipes - 1 )){
-    //     dup2(arr[fdIndex - 1][0], STDIN_FILENO);
-    //     closingBothEndsOfPipe(arr[fdIndex - 1]);   
-    // }
     //ANYTHING IN THE MIDDLE
     else{
         dup2(arr[fdIndex][1], STDOUT_FILENO);
        // closingBothEndsOfPipe(arr[fdIndex]);
         dup2(arr[fdIndex - 1][0], STDIN_FILENO);
         //closingBothEndsOfPipe(arr[fdIndex - 1]);  
-
     }
 
 
@@ -355,16 +347,25 @@ void myFork(vector < vector<string> > vectorOfCommands){
                 
             }
 
+
+            ///////////////////PIPE GOES HERE ////////////////////////////
+
             //PIPE IT UP HERE IF YOU GOTS MORE DAN 1 CHILLREN
             if(numberOfChildren > 1 && (fdIndex < numberOfPipes)) {
+                //cerr << " went in here " << endl;
                 pipeItUp(fdIndex, readWriteIndex, arr, numberOfPipes);
-                
+
             }
             //ELSE IF YOU ARE THE LAST ONE
-            else if(fdIndex == (numberOfPipes) ){
+            else if(i == numberOfChildren - 1){
                 dup2(arr[fdIndex - 1][0], STDIN_FILENO);
-                closingBothEndsOfPipe(arr[fdIndex - 1]);   
-            }    
+                //closingBothEndsOfPipe(arr[fdIndex - 1]);   
+            }   
+
+            ///////////////////////////////////////////////////////////////
+
+            //////////////////EXEC STARTS HERE/////////////////////////////
+
 
             closeAllPipes(arr, numberOfPipes);
             command = *(finalCommandLine.begin());
@@ -414,14 +415,14 @@ void myFork(vector < vector<string> > vectorOfCommands){
         }
         // //ELSE IF YOU ARE THE PARENT
         else{
-            closeAllPipes(arr, numberOfPipes);
-            wait(&waitVar);
             fdIndex++;
             readWriteIndex = swapReadWriteIndex(readWriteIndex);
             
         }
 
     }
+    closeAllPipes(arr, numberOfPipes);
+    wait(&waitVar);
 }
 
 void myCd(vector<string> currentLineVec){
