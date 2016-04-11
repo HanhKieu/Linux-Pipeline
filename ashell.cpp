@@ -86,17 +86,18 @@ void findFile(string givenPath, string stringToFind){
     string tempString;
     string path;
     myDir = opendir(givenPath.c_str());
-    currentFile = readdir(myDir);
+    int succ = 1;
 
+    currentFile = readdir(myDir);
     while(currentFile != NULL){
         //write(STDOUT_FILENO, "\n", 1);
         string tempString(currentFile->d_name);
         //cout << tempString << endl;
         string filePath(givenPath + "/" + tempString);
-        stat(filePath.c_str(), &statBuf);
+        succ = stat(filePath.c_str(), &statBuf);
 
         //IF ITS A DIRECTORY
-        if(statBuf.st_mode & S_IFDIR && (tempString != ".") && (tempString != "..") ){
+        if((statBuf.st_mode & S_IFDIR) && (statBuf.st_mode & S_IRUSR) && (tempString != ".") && (tempString != "..")  ){
             findFile(filePath, stringToFind);
         }
         else if(currentFile->d_name == stringToFind){
@@ -106,6 +107,7 @@ void findFile(string givenPath, string stringToFind){
 
         currentFile = readdir(myDir);
     }
+    closedir(myDir);
 
 }
 void printWorkingDirectory(bool foundRedirect){
@@ -121,7 +123,6 @@ void printWorkingDirectory(bool foundRedirect){
 
 void lsStringGenerator(string path){
     struct stat statBuf;
-    //scout << stat(currentFile) << endl;
     stat(path.c_str(), &statBuf);
     if(statBuf.st_mode & S_IFDIR)
         write(STDOUT_FILENO, "d", 1);
@@ -210,17 +211,11 @@ void myRedirect(vector<string> myVector){
 
     if(typeOfRedirect == ">"){
         int fileToOpen = open(filename.c_str(), O_WRONLY | O_CREAT, mode);
-        if(fileToOpen < 0){
-            cout << "ya don fucked up " << endl;
-        }
         dup2(fileToOpen, STDOUT_FILENO);
 
     }
     else if(typeOfRedirect == "<"){
         int fileToOpen = open(filename.c_str(), O_RDONLY);
-        if(fileToOpen < 0){
-            cout << "ya don fucked up " << endl;
-        }
         dup2(fileToOpen, STDIN_FILENO);
 
     }
